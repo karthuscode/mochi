@@ -4,7 +4,7 @@
 
 Mochi is a local-first desktop learning companion for developers who build with AI and want to understand what they built. V1 is planned to turn approved Codex sessions and Git evidence into focused lessons, practice and later review.
 
-**Current status: Brief 08 native installer implemented; real CLI validation pending.** Read-only detection remains separate from the new explicit, preview-approved project hook installer. Installation preserves unrelated configuration and supports upgrade, rollback, disconnect and private recovery. [Installer evidence](docs/implementation/CODEX_INTEGRATION_INSTALLER.md) records the contracts and pending real Codex trust/task gate. The [internal CLI MVP execution record](docs/implementation/MVP_IMPLEMENTATION.md) tracks the approved staged plan. Assembly remains explicit with no startup trigger, IPC or UI. CLI 0.151.0 is the historical verified baseline and the installed version; Desktop remains partial. Production capture and learning are not implemented.
+**Current status: Brief 08 native installer implemented and validated with a real CLI task.** Read-only detection remains separate from the new explicit, preview-approved project hook installer. Installation preserves unrelated configuration and supports upgrade, rollback, disconnect and private recovery. [Installer evidence](docs/implementation/CODEX_INTEGRATION_INSTALLER.md) records the contracts and successful CLI 0.151.0 install/trust/task/disconnect gate. The [internal CLI MVP execution record](docs/implementation/MVP_IMPLEMENTATION.md) tracks the approved staged plan. Assembly remains explicit with no startup trigger, IPC or UI. CLI 0.151.0 is the historical verified baseline and the installed version; Desktop remains partial. Production capture and learning are not implemented.
 
 ## Development
 
@@ -128,7 +128,7 @@ Rust owns native integration, privacy, persistence and deterministic learning be
 
 ## Next task
 
-Brief 07 implements read-only Codex detection and capability reporting. Brief 08 adds the native, explicitly approved installer and developer connection flow. Its real Codex trust/task validation must pass before **Brief 09 — Production Event Bridge**. Follow the bounded units in [MVP implementation](docs/implementation/MVP_IMPLEMENTATION.md). Each implementation request must remain bounded to its assigned brief.
+Brief 07 implements read-only Codex detection and capability reporting. Brief 08 adds the native, explicitly approved installer and developer connection flow. Its real Codex trust/task validation passed; the next bounded task is **Brief 09 — Production Event Bridge**. Follow the bounded units in [MVP implementation](docs/implementation/MVP_IMPLEMENTATION.md). Each implementation request must remain bounded to its assigned brief.
 
 ## Documentation maintenance
 

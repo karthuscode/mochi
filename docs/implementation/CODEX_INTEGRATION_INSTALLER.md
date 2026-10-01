@@ -1,10 +1,10 @@
 # Brief 08 — Codex integration installer
 
-Implemented native boundary: 2026-10-01. **Real Codex trust/capture validation remains pending.** This is the first implementation unit of the approved CLI-first internal MVP plan, not a completed MVP or a production capture claim.
+Implemented and validated native boundary: 2026-10-01. **The real CLI install/trust/task/disconnect gate passed on macOS Apple Silicon with Codex CLI 0.151.0.** This completes Brief 08 for the approved CLI-first internal MVP plan, not the MVP or production capture.
 
 ## Objective and dependencies
 
-Allow an explicitly approved project hook change, preserving unrelated configuration and supporting safe upgrade, rollback, and disconnect. This addresses P02, P05, P14 and depends on Brief 07 detection and Briefs 05/06 privacy. The installed CLI reports `codex-cli 0.151.0`; this matches the previous feasibility baseline but does not prove this new installer's command groups were invoked by Codex.
+Allow an explicitly approved project hook change, preserving unrelated configuration and supporting safe upgrade, rollback, and disconnect. This addresses P02, P05, P14 and depends on Brief 07 detection and Briefs 05/06 privacy. The installed CLI reports `codex-cli 0.151.0`; this matches the previous feasibility baseline. The real task below proves invocation of the new installer's command groups for the exercised events.
 
 Controlling specifications: [privacy](../security/PRIVACY_SECURITY.md), [architecture](../architecture/ARCHITECTURE.md), [event contract](../architecture/SESSION_EVENT_SCHEMA.md), and [roadmap](V1_ROADMAP.md). Official [Hooks](https://learn.chatgpt.com/docs/hooks) and [configuration](https://learn.chatgpt.com/docs/config-file/config-advanced) were fetched on 2026-10-01. Installation uses the documented event → matcher group → command handler hierarchy; trust is reviewed through Codex `/hooks`, never inferred from a local database or bypassed.
 
@@ -53,8 +53,22 @@ Automated fixtures cover preview/approval refusal, idempotent installation, exac
 
 The restart baseline passed all nine requested repository gates and produced a local unsigned macOS `.app`; the baseline is committed as `04698f6`. All nine gates also passed on the updated implementation (112 Rust + 18 frontend tests and local unsigned macOS `.app`). Outcomes are recorded in [MVP implementation](MVP_IMPLEMENTATION.md).
 
-## Acceptance and next gate
+## Real CLI validation
 
-The native installer and synthetic executable flow are implemented. Full Brief 08 acceptance additionally requires a real CLI task in a disposable synthetic project, exact preview approval, normal `/hooks` trust review, observed event coverage and owned-entry cleanup. No trust bypass, transcript parser, API-key read, private account copy or user-project edit is permitted.
+After the user approved the concrete temporary-project preview, the release helper installed exactly the 12 displayed project-local handlers. Codex recognized all 12 in its normal `/hooks` UI. Each Mochi handler was reviewed and trusted individually; eight unrelated new/changed hooks were left untrusted. No trust bypass or update was used.
+
+The first task attempt was rejected by the provider because the configured `gpt-6.1-sol` model was unsupported with this CLI's ChatGPT login. The CLI's model menu offered `gpt-5.6-sol`; a fresh process used that model via a process-local `-m` argument, without editing model configuration. It changed a synthetic `add` implementation from subtraction to addition and successfully ran `python3 test_calculator.py`.
+
+The successful task produced 19 normalized records under one external session identity: one session start, one prompt, four tool starts, three command executions, four tool completions, three command results, one final agent message, one turn completion and one session stop. Source hooks observed were SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop and SessionEnd. PermissionRequest, Interrupt, compaction and subagent events were not exercised in this installer trial; their earlier capability evidence is not expanded by it. No Git/file-change coverage or production lifecycle is claimed.
+
+Across the trust-review session, rejected-model attempt and successful task, the isolated spool contained 23 records with contiguous receive sequences 1–23, the approved project ID and policy revision, and external session IDs. Record files were `0600`, the spool directory `0700`; classification was sanitized or metadata-only, with no truncation or capture-gap records. These are observations of this trial, not a new general privacy audit. The helper emitted no diagnostic content into the coding flow.
+
+After all CLI processes exited, the exact preview-approved disconnect removed the newly created hook file. The project `.codex` directory and Codex's ordinary retained trust state were preserved. The validation automation did not directly inspect or edit user-project files, global hook configuration, account settings, private session storage or API keys; Codex used its existing login and normal trust mechanism. Temporary captured records and configuration receipts remain outside the repository; only aggregate validation facts are recorded here.
+
+This follow-up changed documentation only. `pnpm format:check` and `git diff --check` passed; the nine full gates above apply to the unchanged installer source at `34fd1cf` and were not repeated for this documentation update.
+
+## Acceptance and next brief
+
+Brief 08's native implementation, automated failure-boundary checks and real CLI install/trust/task/disconnect gate passed. Brief 09 — Production Event Bridge is the next bounded implementation task. No trust bypass, transcript parser, API-key read, private account copy or user-project edit was used.
 
 No production capture policy, automatic importer/assembler, persistent jobs, IPC, product UI, remote analysis or learning was implemented here. These remain the next bounded units of the approved MVP plan. The next production bridge must fail closed on missing/revoked policy before any payload write; installation success alone must never be reported as production readiness.
