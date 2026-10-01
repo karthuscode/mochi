@@ -74,6 +74,8 @@ The backup may contain preexisting user secrets: it is a private short-lived **c
 
 Helper must produce no agent-context stdout, run no network requests, and fail open for the coding workflow while failing closed for data collection. All launch options use safe arguments, minimal environment and bounded runtime. Errors cannot veto user commands or change Codex trust/approval rules.
 
+Brief 08 implements native preview-token approval and project-only JSON hook merging, exact owned-entry rollback/disconnect, bounded strict reads, symlink/owner checks, private journals and configuration backups. The developer flow discloses capture scope, manual Codex trust and backup retention; there is no IPC/onboarding or automatic installation. Backup expiry cleanup runs on installer use or explicit maintenance, not while the app is stopped. Its real-client trust/capture gate and production policy/pause remain pending. Detection remains read-only. See [implementation evidence](../implementation/CODEX_INTEGRATION_INSTALLER.md).
+
 ## Local storage, permissions and retention
 
 Use app-owned macOS application support storage, private directories (0700) and files (0600). No Mochi cloud storage. SQLite is not application-encrypted in V1; rely on OS account permissions and recommend device encryption in the product explanation without claiming protection from malware or another process running as the same user.

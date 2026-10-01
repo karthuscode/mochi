@@ -39,20 +39,20 @@ fn cli(directory: &Path, output: &str) -> PathBuf {
 
 fn hooks(codex_home: &Path, helper: &Path, unrelated: bool) {
     fs::create_dir_all(codex_home).expect("codex home");
-    let mut values = vec![serde_json::json!({
-        "type": "command",
-        "command": format!("{} capture --project-id synthetic", helper.display())
-    })];
+    let command = format!("{} capture --project-id 11111111-1111-4111-8111-111111111111 --approved-root /synthetic --client-surface cli --policy-revision 1", crate::hooks::shell_quote(helper.to_str().expect("path")).expect("quote"));
+    let mut events = serde_json::Map::new();
+    for event in crate::CAPTURE_EVENTS {
+        events.insert(
+            event.to_owned(),
+            serde_json::json!([{"hooks": [{"type": "command", "command": command}]}]),
+        );
+    }
     if unrelated {
-        values.push(serde_json::json!({
-            "type": "command",
-            "command": "/usr/local/bin/user-owned-hook"
-        }));
+        events.get_mut("SessionStart").expect("event").as_array_mut().expect("groups").push(serde_json::json!({"hooks": [{"type": "command", "command": "/usr/local/bin/user-owned-hook"}]}));
     }
     fs::write(
         codex_home.join("hooks.json"),
-        serde_json::to_vec_pretty(&serde_json::json!({"SessionStart": values}))
-            .expect("hooks json"),
+        serde_json::to_vec_pretty(&serde_json::json!({"hooks": events})).expect("hooks json"),
     )
     .expect("hooks");
 }
@@ -204,11 +204,15 @@ fn configuration_states_preserve_unrelated_hooks_and_fail_closed() {
     let cases = [
         (None, ConfigurationState::Absent),
         (
-            Some(r#"{"SessionStart":[{"command":"/usr/bin/other"}]}"#),
+            Some(
+                r#"{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"/usr/bin/other"}]}]}}"#,
+            ),
             ConfigurationState::PresentWithoutMochi,
         ),
         (
-            Some(r#"{"SessionStart":[{"command":"/old/mochi-hook capture"}]}"#),
+            Some(
+                r#"{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"/old/mochi-hook capture"}]}]}}"#,
+            ),
             ConfigurationState::MochiCommandMismatch,
         ),
         (Some("{"), ConfigurationState::Malformed),
@@ -455,4 +459,60 @@ fn representative_detection_cost_is_bounded() {
     #[cfg(target_os = "macos")]
     println!("synthetic Desktop metadata: {desktop_elapsed:?}");
     println!("synthetic full Codex detection: {:?}", started.elapsed());
+}
+
+#[cfg(unix)]
+#[test]
+fn inherited_output_pipe_cannot_extend_the_command_deadline() {
+    let root = TempDir::new().expect("root");
+    let script = root.path().join("child-with-descendant");
+    executable(&script, "sleep 10 &\necho 'codex-cli 0.151.0'\nexit 0");
+    let start = Instant::now();
+    assert_eq!(
+        crate::process::run_bounded(&script, &[], Duration::from_millis(50)),
+        Err(DetectionError::ExecutableTimedOut)
+    );
+    assert!(start.elapsed() < Duration::from_secs(1));
+}
+
+#[test]
+fn hook_metadata_partial_coverage_and_shell_substitution_never_establish_readiness() {
+    let root = TempDir::new().expect("root");
+    let home = root.path().join(".codex");
+    let helper = helper(root.path(), "0.1.0");
+    fs::create_dir_all(&home).expect("home");
+    fs::write(
+        home.join("hooks.json"),
+        serde_json::to_vec(
+            &serde_json::json!({"description": format!("{} capture", helper.display())}),
+        )
+        .expect("json"),
+    )
+    .expect("config");
+    let report = CodexDetector::new(options(root.path())).detect();
+    assert_eq!(
+        surface(&report, ClientSurface::Cli).configuration.state,
+        ConfigurationState::Absent
+    );
+    hooks(&home, &helper, false);
+    let mut value: serde_json::Value =
+        serde_json::from_slice(&fs::read(home.join("hooks.json")).expect("config")).expect("json");
+    value["hooks"]
+        .as_object_mut()
+        .expect("events")
+        .remove("Interrupt");
+    fs::write(
+        home.join("hooks.json"),
+        serde_json::to_vec(&value).expect("json"),
+    )
+    .expect("config");
+    let report = CodexDetector::new(options(root.path())).detect();
+    assert_eq!(
+        surface(&report, ClientSurface::Cli).configuration.state,
+        ConfigurationState::MochiCommandMismatch
+    );
+    assert!(!crate::hooks::valid_capture_command(
+        &format!("{} capture $(unsafe)", helper.display()),
+        &helper
+    ));
 }

@@ -4,7 +4,7 @@
 
 Mochi is a local-first desktop learning companion for developers who build with AI and want to understand what they built. V1 is planned to turn approved Codex sessions and Git evidence into focused lessons, practice and later review.
 
-**Current status: Brief 07 Codex detection and capabilities.** The repository now has a read-only native service that detects distinct Codex CLI and Desktop installations, records exact-version capability provenance, inspects bounded hook metadata, checks the Mochi helper, and derives explicit readiness. It does not install hooks or start capture. [Detection evidence](docs/implementation/CODEX_DETECTION_CAPABILITIES.md) describes the contract and limits. Brief 04's bounded session assembly remains explicit and has no startup trigger, IPC, or UI. Codex CLI 0.151.0 is the verified baseline; Codex Desktop 26.908.40834 remains partial with prompt and interrupt coverage unknown. There is still no production capture or learning feature.
+**Current status: Brief 08 native installer implemented; real CLI validation pending.** Read-only detection remains separate from the new explicit, preview-approved project hook installer. Installation preserves unrelated configuration and supports upgrade, rollback, disconnect and private recovery. [Installer evidence](docs/implementation/CODEX_INTEGRATION_INSTALLER.md) records the contracts and pending real Codex trust/task gate. The [internal CLI MVP execution record](docs/implementation/MVP_IMPLEMENTATION.md) tracks the approved staged plan. Assembly remains explicit with no startup trigger, IPC or UI. CLI 0.151.0 is the historical verified baseline and the installed version; Desktop remains partial. Production capture and learning are not implemented.
 
 ## Development
 
@@ -64,7 +64,9 @@ Integration-detection checks:
 cargo test -p mochi-integration --locked
 ```
 
-The helper's production-default spool is `~/Library/Application Support/dev.mochi.desktop/capture/v1/spool`. The `--spool-root` override is for isolated development tests. Hook installation remains a manual development procedure documented in the capture report; do not replace an existing Codex hook file wholesale.
+Brief 08 also adds explicit developer commands `connect`, `disconnect`, and `rollback-integration`, requiring an exact displayed approval token. They are not automatic production setup. See the [installer report](docs/implementation/CODEX_INTEGRATION_INSTALLER.md) before using them; do not point test flows at an unapproved project or user configuration.
+
+The helper's production-default spool is `~/Library/Application Support/dev.mochi.desktop/capture/v1/spool`. The `--spool-root` override is for isolated development tests. Hook trust remains a manual Codex review; installation can use the explicit Brief 08 flow. Never replace an existing hook file wholesale.
 
 Focused commands: `pnpm test:frontend`, `pnpm test:rust`, `pnpm lint:frontend`, `pnpm lint:rust`. Rust checks require the native prerequisites; run `pnpm build` before direct release-mode Cargo commands so embedded frontend assets exist. Normal `desktop:build` handles this automatically.
 
@@ -126,7 +128,7 @@ Rust owns native integration, privacy, persistence and deterministic learning be
 
 ## Next task
 
-Brief 07 implements read-only Codex detection and capability reporting. The next bounded task is **Brief 08 — Codex Integration Installer**; it must require user consent and preserve unrelated configuration. Each implementation request must remain bounded to its assigned brief.
+Brief 07 implements read-only Codex detection and capability reporting. Brief 08 adds the native, explicitly approved installer and developer connection flow. Its real Codex trust/task validation must pass before **Brief 09 — Production Event Bridge**. Follow the bounded units in [MVP implementation](docs/implementation/MVP_IMPLEMENTATION.md). Each implementation request must remain bounded to its assigned brief.
 
 ## Documentation maintenance
 

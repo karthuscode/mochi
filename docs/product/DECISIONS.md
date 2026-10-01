@@ -21,7 +21,7 @@ Baseline: 1.0, 2026-09-13. Authority: decision provenance and change control. Th
 | D13 | NEW, EXPOSED, PRACTICING, DEMONSTRATED, STRONG | No unsupported language mastery percentages |
 | D14 | Simple review intervals 1, 3, 7, 14, 30 days | Correct increases interval; incorrect shortens it |
 | D15 | Home, Sessions, Learn, Knowledge, Review, Settings | One coherent native product |
-| D16 | Recommended stack: Tauri 2 / React / TS / Rust / SQLite | Stack scaffold versions pinned by supplied Brief 00; SQLite remains future work |
+| D16 | Recommended stack: Tauri 2 / React / TS / Rust / SQLite | Stack scaffold versions pinned by supplied Brief 00; bundled SQLite implemented by Brief 03 |
 | D17 | Brief 01 proves passive integration before UI investment | Real Codex capture, no manual transcript export/copy-paste |
 | D18 | Small helper and durable local event spool | Capture independent of foreground UI; no dependency on LLM/network |
 
@@ -60,3 +60,5 @@ G01 cannot be resolved by launching a separate App Server and controlling a new 
 2026-09-13 — D16/D17 and G01/G02 sequencing amendment: the user's supplied **Brief 00 — Repository Foundation** requests a runnable minimal workspace now, while the original roadmap put that work in Brief 02 after G01. Follow the explicit task by moving scaffold/toolchain/CI work into Brief 00; keep G01 unresolved and retain every capture, privacy and product gate. Brief 02 becomes a post-spike foundation compatibility review. Evidence and acceptance impact: [FOUNDATION.md](../implementation/FOUNDATION.md). Affected documents: README, AGENTS, architecture, roadmap, brief template and validation plan. No persisted product data or migration is introduced; minimum-macOS and release validation remain open.
 
 For each changed decision, record ID, date, reason, evidence, affected specs, and migration/acceptance impact. Routine details within these contracts need no new product approval. A failed integration gate, new remote transfer, new provider, or scope expansion requires a concrete revised proposal before dependent work. Do not silently pivot to an IDE, screen recorder, private transcript parser, or manual import workflow.
+
+2026-10-01 — Internal MVP milestone: the user selected personal Apple Silicon macOS use with Codex CLI, aiming at a real approved work episode → evidence-grounded explanation → persisted self-check. The full V1 scope and ready-lesson publication requirements remain unchanged; partial explanation is not a full ready lesson. Remote analysis still defaults off with per-session preview approval and Keychain BYOK. Implementation proceeds through bounded units with real-client gates; see [MVP execution](../implementation/MVP_IMPLEMENTATION.md). Native installer ownership/recovery is now implemented; production capture/analysis/learning are not.

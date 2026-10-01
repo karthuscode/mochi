@@ -2,10 +2,11 @@ use mochi_capture::{
     CaptureSanitizer, ClientSurface, CodexSessionSource, GitCliContextReader, GitContextReader,
     SessionSource, SnapshotRole, Spool, SpoolLimits, SystemClock,
 };
+use mochi_integration::{CodexInstaller, InstallRequest};
 use serde_json::json;
 use std::collections::BTreeMap;
 use std::fs::OpenOptions;
-use std::io::{Read, Write};
+use std::io::{BufRead, Read, Write};
 #[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -28,12 +29,89 @@ fn main() {
         }
         Some("inspect") => run_inspect(),
         Some("git-snapshot") => run_git_snapshot(),
+        Some("connect") => run_integration("connect"),
+        Some("disconnect") => run_integration("disconnect"),
+        Some("rollback-integration") => run_integration("rollback"),
         _ => Err("usage"),
     };
     if let Err(message) = code {
         eprintln!("mochi-hook: {message}");
         std::process::exit(2);
     }
+}
+
+/// Explicit developer connection flow, separate from silent capture. Existing
+/// config and backups never appear in the preview or error output.
+fn run_integration(action: &str) -> Result<(), &'static str> {
+    let options = parse_options(std::env::args().skip(2))?;
+    let root = option(&options, "approved-root")
+        .map(PathBuf::from)
+        .ok_or("approved root required")?;
+    let state_root = option(&options, "integration-state-root")
+        .map(PathBuf::from)
+        .ok_or("private integration state required")?;
+    let installer = CodexInstaller::new(state_root).map_err(|_| "integration state unavailable")?;
+    let plan = match action {
+        "connect" => {
+            let project_id = option(&options, "project-id")
+                .and_then(|v| Uuid::parse_str(v).ok())
+                .ok_or("project id required")?;
+            let policy_revision = option(&options, "policy-revision")
+                .and_then(|v| v.parse::<u64>().ok())
+                .ok_or("policy revision required")?;
+            let spool_root = option(&options, "spool-root")
+                .map(PathBuf::from)
+                .ok_or("private spool root required")?;
+            let helper_path = std::env::current_exe().map_err(|_| "helper unavailable")?;
+            installer.prepare_install(InstallRequest {
+                project_id,
+                approved_root: root,
+                helper_path,
+                spool_root,
+                policy_revision,
+            })
+        }
+        "disconnect" => installer.prepare_disconnect(&root),
+        _ => installer.prepare_rollback(&root),
+    }
+    .map_err(|error| match error {
+        mochi_integration::InstallError::ConcurrentEdit => "configuration changed; preview again",
+        mochi_integration::InstallError::OwnershipConflict => {
+            "owned hook conflict; manual review required"
+        }
+        mochi_integration::InstallError::UnsupportedConfiguration => {
+            "inline hooks require manual review"
+        }
+        mochi_integration::InstallError::RecoveryRequired => {
+            "integration recovery requires manual review"
+        }
+        mochi_integration::InstallError::NotInstalled => "no owned installation",
+        _ => "integration preview unavailable",
+    })?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(plan.preview()).map_err(|_| "preview unavailable")?
+    );
+    println!("This changes only the displayed project hooks. Connecting permits local capture within this approved root. Remote analysis remains off; no API key or account settings are changed.");
+    println!("Configuration backups are private recovery files and expire at the next cleanup after seven days. Codex hook trust must be reviewed through /hooks; it is never changed here.");
+    let approval = format!("approve {}", plan.preview().plan_id);
+    println!("To approve this exact change, type: {approval}");
+    let mut input = String::new();
+    std::io::stdin()
+        .lock()
+        .take(128)
+        .read_line(&mut input)
+        .map_err(|_| "approval unavailable")?;
+    if input.len() >= 128 || input.trim() != approval {
+        println!("No configuration change approved.");
+        return Ok(());
+    }
+    let id = plan.preview().plan_id;
+    let outcome = installer
+        .apply(plan, id)
+        .map_err(|_| "integration change failed safely; preview again or review recovery")?;
+    println!("Integration configuration: {outcome:?}. Review the exact Mochi hooks in Codex /hooks before testing.");
+    Ok(())
 }
 
 fn run_capture() {
@@ -163,6 +241,7 @@ fn parse_options(
                 | "spool-root"
                 | "role"
                 | "output"
+                | "integration-state-root"
         ) {
             return Err("unknown option");
         }

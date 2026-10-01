@@ -35,7 +35,7 @@ The CLI baseline reports lifecycle, prompt, final response, tools, commands, per
 
 ## Hook configuration, helper, and trust
 
-The detector reads only `hooks.json` at the configured user Codex home and explicitly approved project roots. Each file must be a regular non-symlink JSON object no larger than 256 KiB. Traversal is bounded to depth 16, 256 items per container, and 4,096 collected strings. The result contains only state, counts, and whether unrelated hooks exist; it never returns hook commands or arbitrary configuration content.
+The detector reads only `hooks.json` at the configured user Codex home and explicitly approved project roots. Each file must be a regular non-symlink JSON object no larger than 256 KiB. Strict parsing is bounded to depth 16 and 256 items per container; duplicate keys and overflow fail closed. The result contains only state, counts, and whether unrelated hooks exist; it never returns hook commands or arbitrary configuration content.
 
 Configuration states are `absent`, `present_without_mochi`, `mochi_configured`, `mochi_command_mismatch`, `malformed`, and `unreadable`. Unrelated hooks are valid and remain untouched.
 
@@ -81,3 +81,7 @@ The full repository gates and native macOS build are recorded in the completion 
 - Architecture detection recognizes thin arm64/x86_64 and universal Mach-O headers; scripts and unfamiliar formats remain unknown, and universal slice membership is not enumerated in this brief.
 - No Windows/Linux Desktop detector, configuration installer, self-test, persistence, IPC, onboarding, automatic capture, importer, or assembly trigger is included.
 - Brief 08 owns consented installation, transactional merging, backup/rollback, trust guidance, testing, upgrade, and removal.
+
+## 2026-10-01 restart corrections
+
+Read-only configuration inspection now requires documented event/matcher/handler structure, complete required event coverage and literal valid helper arguments. Arbitrary descriptions and incomplete groups cannot establish readiness. Reads are capped on the open handle, duplicate keys and bounded-structure overflow are rejected. Version deadlines cover output completion as well as the direct child, with Unix process-group cleanup for inherited pipes. Installer functionality is separate and documented in [Brief 08](CODEX_INTEGRATION_INSTALLER.md); detection still never edits configuration or trust.

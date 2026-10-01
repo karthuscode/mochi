@@ -2,6 +2,10 @@
 
 Baseline: 1.2. Authority: local persistence, provenance, transactional effects, retention/deletion relationships. SQLite is the source of truth. Briefs 03 and 04 implement the project, preassembly-ingress, validated-session, and assembly-association subset below; later learning tables remain planned.
 
+## Integration recovery metadata
+
+Brief 08 adds versioned private files outside SQLite for installer ownership and pending configuration transactions. They contain only native target identity, Mochi-owned command, helper fingerprint, ownership flags and before/after hashes. Original config bytes are kept only in memory or private short-lived recovery backups, never in session/learning tables, diagnostics or outbound data. No migration is added. See [installer](../implementation/CODEX_INTEGRATION_INSTALLER.md).
+
 ## Conventions
 
 UUID primary keys unless noted. UTC RFC3339 timestamps; integer booleans/counts; validated canonical enum values. JSON content uses strict versioned schemas and size limits. Enable foreign keys on every connection; WAL with a single core writer and atomic migrations. Use parameterized statements and indexed bounded queries. Keep schema-migration version, event-contract version, learning-contract version, and knowledge-rule version separate.

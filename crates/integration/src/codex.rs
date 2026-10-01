@@ -350,41 +350,17 @@ fn inspect_configuration(
         if !path.exists() {
             continue;
         }
-        let metadata = match fs::symlink_metadata(&path) {
-            Ok(metadata)
-                if metadata.file_type().is_file()
-                    && !metadata.file_type().is_symlink()
-                    && metadata.len() <= 256 * 1024 =>
-            {
-                metadata
-            }
-            Ok(_) => {
-                report.state = ConfigurationState::Malformed;
-                return report;
-            }
-            Err(error) => {
-                report.state = if error.kind() == std::io::ErrorKind::PermissionDenied {
-                    ConfigurationState::Unreadable
-                } else {
-                    ConfigurationState::Malformed
-                };
-                return report;
-            }
-        };
-        if metadata.len() == 0 {
-            report.state = ConfigurationState::Malformed;
-            return report;
-        }
-        let bytes = match fs::read(&path) {
-            Ok(bytes) => bytes,
-            Err(_) => {
+        let bytes = match crate::hooks::read_config(&path) {
+            Ok(Some(bytes)) => bytes,
+            Ok(None) => continue,
+            Err(()) => {
                 report.state = ConfigurationState::Unreadable;
                 return report;
             }
         };
-        let value: Value = match serde_json::from_slice(&bytes) {
-            Ok(value @ Value::Object(_)) => value,
-            _ => {
+        let value = match crate::hooks::parse_config(&bytes) {
+            Ok(value) => value,
+            Err(()) => {
                 report.state = ConfigurationState::Malformed;
                 return report;
             }
@@ -416,46 +392,47 @@ struct HookSummary {
 }
 
 fn summarize_hooks(value: &Value, expected_helper: &Path) -> HookSummary {
-    let expected = expected_helper.to_string_lossy();
-    let mut strings = Vec::new();
-    collect_strings(value, &mut strings, 0);
-    let exact = strings
-        .iter()
-        .any(|value| value.contains(expected.as_ref()) && value.contains("capture"));
-    let other_mochi = strings
-        .iter()
-        .any(|value| value.contains("mochi-hook") && value.contains("capture"))
-        && !exact;
-    let unrelated = strings.iter().any(|value| {
-        (value.contains("command") || value.contains('/') || value.contains(' '))
-            && !value.contains("mochi-hook")
-    });
-    HookSummary {
-        has_entries: value.as_object().is_some_and(|items| !items.is_empty()),
-        exact,
-        other_mochi,
-        unrelated,
-    }
-}
-
-fn collect_strings<'a>(value: &'a Value, output: &mut Vec<&'a str>, depth: usize) {
-    if depth > 16 || output.len() >= 4096 {
-        return;
-    }
-    match value {
-        Value::String(value) => output.push(value),
-        Value::Array(values) => {
-            for value in values.iter().take(256) {
-                collect_strings(value, output, depth + 1);
+    let mut summary = HookSummary::default();
+    let mut covered = std::collections::BTreeSet::new();
+    if let Some(events) = value.get("hooks").and_then(Value::as_object) {
+        for (event, groups) in events {
+            for group in groups.as_array().into_iter().flatten() {
+                let unrestricted = group.get("matcher").is_none_or(|v| v.as_str() == Some(""));
+                for handler in group
+                    .get("hooks")
+                    .and_then(Value::as_array)
+                    .into_iter()
+                    .flatten()
+                {
+                    summary.has_entries = true;
+                    let command = handler.get("command").and_then(Value::as_str).unwrap_or("");
+                    let exact = handler.get("type").and_then(Value::as_str) == Some("command")
+                        && crate::hooks::valid_capture_command(command, expected_helper);
+                    if exact && unrestricted {
+                        covered.insert(event.as_str());
+                    }
+                    if exact
+                        || crate::hooks::literal_words(command).is_some_and(|words| {
+                            words.first().is_some_and(|word| {
+                                Path::new(word)
+                                    .file_name()
+                                    .is_some_and(|name| name == "mochi-hook")
+                            })
+                        })
+                    {
+                        summary.other_mochi = true;
+                    } else {
+                        summary.unrelated = true;
+                    }
+                }
             }
         }
-        Value::Object(values) => {
-            for value in values.values().take(256) {
-                collect_strings(value, output, depth + 1);
-            }
-        }
-        _ => {}
     }
+    summary.exact = crate::hooks::CAPTURE_EVENTS
+        .iter()
+        .all(|event| covered.contains(event));
+    summary.other_mochi &= !summary.exact;
+    summary
 }
 
 fn capability_matrix(surface: ClientSurface, exact_baseline: bool) -> CapabilitySet {

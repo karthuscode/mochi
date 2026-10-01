@@ -2,6 +2,7 @@ use crate::DetectionError;
 use std::io::Read;
 use std::path::Path;
 use std::process::{Command, Stdio};
+use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -19,48 +20,64 @@ pub(crate) fn run_bounded(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        command.process_group(0);
+    }
     let mut child = command.spawn().map_err(map_spawn_error)?;
     let stdout = child
         .stdout
         .take()
         .ok_or(DetectionError::ExecutableFailed)?;
-    let reader = thread::spawn(move || {
+    let (sender, receiver) = mpsc::sync_channel(1);
+    thread::spawn(move || {
         let mut bytes = Vec::new();
-        stdout
+        let result = stdout
             .take((MAX_OUTPUT_BYTES + 1) as u64)
             .read_to_end(&mut bytes)
-            .map(|_| bytes)
+            .map(|_| bytes);
+        let _ = sender.send(result);
     });
     let deadline = Instant::now() + timeout;
-    let status = loop {
-        match child.try_wait() {
-            Ok(Some(status)) => break status,
-            Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(5)),
-            Ok(None) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                let _ = reader.join();
-                return Err(DetectionError::ExecutableTimedOut);
-            }
-            Err(_) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                let _ = reader.join();
-                return Err(DetectionError::ExecutableFailed);
+    let mut output = None;
+    let result = loop {
+        if output.is_none() {
+            match receiver.try_recv() {
+                Ok(Ok(bytes)) if bytes.len() > MAX_OUTPUT_BYTES => {
+                    break Err(DetectionError::OutputLimitExceeded);
+                }
+                Ok(Ok(bytes)) => output = Some(bytes),
+                Ok(Err(_)) | Err(mpsc::TryRecvError::Disconnected) => {
+                    break Err(DetectionError::ExecutableFailed);
+                }
+                Err(mpsc::TryRecvError::Empty) => {}
             }
         }
+        match child.try_wait() {
+            Ok(Some(status)) if !status.success() => break Err(DetectionError::ExecutableFailed),
+            Ok(Some(_)) if output.is_some() => {
+                break String::from_utf8(output.take().unwrap_or_default())
+                    .map_err(|_| DetectionError::VersionParseFailed);
+            }
+            Err(_) => break Err(DetectionError::ExecutableFailed),
+            _ => {}
+        }
+        if Instant::now() >= deadline {
+            break Err(DetectionError::ExecutableTimedOut);
+        }
+        thread::sleep(Duration::from_millis(5));
     };
-    let bytes = reader
-        .join()
-        .map_err(|_| DetectionError::ExecutableFailed)?
-        .map_err(|_| DetectionError::ExecutableFailed)?;
-    if bytes.len() > MAX_OUTPUT_BYTES {
-        return Err(DetectionError::OutputLimitExceeded);
+    // A descendant can inherit stdout after the direct child exits. Never join a
+    // pipe reader without a deadline; terminate our isolated process group.
+    #[cfg(unix)]
+    if let Ok(group) = i32::try_from(child.id()) {
+        // SAFETY: group is the positive PID of our own process_group(0) child.
+        unsafe { libc::kill(-group, libc::SIGKILL) };
     }
-    if !status.success() {
-        return Err(DetectionError::ExecutableFailed);
-    }
-    String::from_utf8(bytes).map_err(|_| DetectionError::VersionParseFailed)
+    let _ = child.kill();
+    let _ = child.wait();
+    result
 }
 
 fn map_spawn_error(error: std::io::Error) -> DetectionError {

@@ -51,6 +51,8 @@ P01–P16 pass the scenarios in [VALIDATION_PLAN.md](../implementation/VALIDATIO
 
 Partial/no-Git sessions remain browsable. They receive a qualified debrief only when enough evidence exists. An empty, fully excluded, or unsupported session yields a clear insufficient-context result instead of invented lessons.
 
+The approved 2026-10-01 personal CLI MVP is an intermediate engineering milestone: a real approved coding episode, grounded explanation and persisted self-check. It is not the complete V1 release; mini challenge, knowledge and delayed review remain required for their corresponding publication/release milestones. See [execution record](../implementation/MVP_IMPLEMENTATION.md).
+
 ## Quality and success measures
 
 Evaluate with a small consented alpha cohort and synthetic fixtures; no production telemetry backend. Locally expose time-to-ready, event drops/gaps, analysis failures, and completed learning activities. Voluntary alpha feedback should assess whether users can explain a real project decision and later recall it. Session duration and lesson views are engagement signals, not learning proof.
