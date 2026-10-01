@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+Cargo.lock
+node_modules/
+dist/
+target/
+coverage/
+apps/desktop/src-tauri/gen/
+# Preserve the master specification pack's existing Markdown layout.
+docs/

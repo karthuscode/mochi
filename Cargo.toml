@@ -1,0 +1,12 @@
+[workspace]
+members = [
+  "apps/desktop/src-tauri",
+  "apps/mochi-hook",
+  "crates/capture",
+  "crates/domain",
+  "crates/persistence",
+  "crates/assembly",
+  "crates/privacy",
+  "crates/integration",
+]
+resolver = "2"

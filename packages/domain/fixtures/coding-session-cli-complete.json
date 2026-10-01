@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "id": "20000000-0000-4000-8000-000000000001",
+  "projectId": "10000000-0000-4000-8000-000000000001",
+  "source": {
+    "provider": "codex",
+    "clientSurface": "cli",
+    "clientVersion": "0.151.0",
+    "adapterVersion": "prototype-1",
+    "transport": "hooks"
+  },
+  "startedAt": "2026-09-17T10:00:00Z",
+  "endedAt": "2026-09-17T10:02:00Z",
+  "status": "completed",
+  "turns": [
+    {
+      "id": "30000000-0000-4000-8000-000000000001",
+      "sessionId": "20000000-0000-4000-8000-000000000001",
+      "sourceTurnId": "synthetic-turn-1",
+      "startedAt": "2026-09-17T10:00:00Z",
+      "endedAt": "2026-09-17T10:01:00Z",
+      "userPrompt": "Add a bounded parser.",
+      "agentFinalResponse": "Implemented the bounded parser and verified it.",
+      "eventIds": ["40000000-0000-4000-8000-000000000001"],
+      "status": "completed"
+    }
+  ],
+  "events": [
+    {
+      "schemaVersion": 1,
+      "id": "40000000-0000-4000-8000-000000000001",
+      "sessionId": "20000000-0000-4000-8000-000000000001",
+      "projectId": "10000000-0000-4000-8000-000000000001",
+      "turnId": "30000000-0000-4000-8000-000000000001",
+      "source": {
+        "provider": "codex",
+        "clientSurface": "cli",
+        "clientVersion": "0.151.0",
+        "adapterVersion": "prototype-1",
+        "transport": "hooks"
+      },
+      "provenance": {
+        "sourceEventId": "synthetic-prompt-1",
+        "sourceSequence": null,
+        "sourceEventType": "UserPromptSubmit",
+        "occurredAt": "2026-09-17T10:00:01Z"
+      },
+      "receivedAt": "2026-09-17T10:00:02Z",
+      "sequence": 1,
+      "origin": "provider",
+      "eventType": "user.prompt",
+      "payload": {
+        "text": "Add a bounded parser."
+      },
+      "sensitivity": {
+        "classification": "sanitized",
+        "redactionCount": 0,
+        "rulesVersion": "prototype-1",
+        "policyRevision": 1,
+        "truncated": false
+      }
+    }
+  ],
+  "toolExecutions": [
+    {
+      "id": "50000000-0000-4000-8000-000000000001",
+      "sessionId": "20000000-0000-4000-8000-000000000001",
+      "turnId": "30000000-0000-4000-8000-000000000001",
+      "sourceToolUseId": "synthetic-tool-1",
+      "toolName": "apply_patch",
+      "startedAt": "2026-09-17T10:00:10Z",
+      "completedAt": "2026-09-17T10:00:20Z",
+      "status": "completed",
+      "inputSummary": "Update the synthetic parser.",
+      "outputSummary": "One synthetic file updated.",
+      "relatedFilePaths": ["src/parser.ts"]
+    }
+  ],
+  "commandExecutions": [
+    {
+      "id": "60000000-0000-4000-8000-000000000001",
+      "sessionId": "20000000-0000-4000-8000-000000000001",
+      "turnId": "30000000-0000-4000-8000-000000000001",
+      "toolExecutionId": "50000000-0000-4000-8000-000000000001",
+      "command": "pnpm test:synthetic",
+      "workingDirectory": ".",
+      "startedAt": "2026-09-17T10:00:30Z",
+      "completedAt": "2026-09-17T10:00:40Z",
+      "status": "completed",
+      "exitCode": 0,
+      "outputSummary": "Synthetic checks passed."
+    }
+  ],
+  "fileChanges": [
+    {
+      "id": "70000000-0000-4000-8000-000000000001",
+      "path": "src/parser.ts",
+      "previousPath": null,
+      "changeType": "modified",
+      "source": "git_comparison",
+      "observedDuringSession": true,
+      "attribution": "ambiguous"
+    }
+  ],
+  "gitContext": {
+    "availability": "available",
+    "before": {
+      "repositoryRoot": "/synthetic/mochi-fixture",
+      "branch": "fixture",
+      "headCommit": "0123456789abcdef",
+      "capturedAt": "2026-09-17T09:59:59Z",
+      "workingTreeState": "dirty",
+      "files": [
+        {
+          "path": "src/preexisting.ts",
+          "previousPath": null,
+          "changeType": "modified",
+          "staged": false,
+          "contentHash": "synthetic-before-hash",
+          "byteCount": 42,
+          "truncated": false,
+          "unstaged": true,
+          "content": "export const synthetic = true;",
+          "omission": null
+        }
+      ],
+      "diffStats": {
+        "filesChanged": 1,
+        "insertions": null,
+        "deletions": null
+      },
+      "truncated": false,
+      "warnings": [],
+      "detached": false,
+      "excludedCount": 0,
+      "omittedFileCount": 0
+    },
+    "after": {
+      "repositoryRoot": "/synthetic/mochi-fixture",
+      "branch": "fixture",
+      "headCommit": "0123456789abcdef",
+      "capturedAt": "2026-09-17T10:02:01Z",
+      "workingTreeState": "dirty",
+      "files": [
+        {
+          "path": "src/preexisting.ts",
+          "previousPath": null,
+          "changeType": "modified",
+          "staged": false,
+          "contentHash": "synthetic-before-hash",
+          "byteCount": 42,
+          "truncated": false,
+          "unstaged": true,
+          "content": "export const synthetic = true;",
+          "omission": null
+        },
+        {
+          "path": "src/parser.ts",
+          "previousPath": null,
+          "changeType": "modified",
+          "staged": false,
+          "contentHash": "synthetic-after-hash",
+          "byteCount": 84,
+          "truncated": false,
+          "unstaged": true,
+          "content": "export const synthetic = true;",
+          "omission": null
+        }
+      ],
+      "diffStats": {
+        "filesChanged": 2,
+        "insertions": 8,
+        "deletions": 2
+      },
+      "truncated": false,
+      "warnings": [],
+      "detached": false,
+      "excludedCount": 0,
+      "omittedFileCount": 0
+    }
+  },
+  "captureCapabilities": {
+    "sessionLifecycle": "supported",
+    "userPrompt": "supported",
+    "agentResponse": "supported",
+    "toolActivity": "supported",
+    "commands": "supported",
+    "fileActivity": "partial",
+    "permissions": "supported",
+    "interrupts": "supported",
+    "gitContext": "supported"
+  },
+  "captureCompleteness": {
+    "sessionLifecycle": "complete",
+    "prompt": "complete",
+    "agentResponse": "complete",
+    "tools": "complete",
+    "commands": "complete",
+    "files": "complete",
+    "git": "complete",
+    "interrupts": "not_applicable"
+  }
+}

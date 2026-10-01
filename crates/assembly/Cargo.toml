@@ -1,0 +1,16 @@
+[package]
+name = "mochi-assembly"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98.1"
+publish = false
+
+[dependencies]
+mochi-capture = { path = "../capture" }
+mochi-domain = { path = "../domain" }
+mochi-persistence = { path = "../persistence" }
+sha2 = "=0.10.9"
+uuid = { version = "=1.26.1", features = ["serde", "v4"] }
+
+[dev-dependencies]
+tempfile = "=3.26.0"

@@ -1,0 +1,22 @@
+{
+  "name": "@mochi/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json && tsc -p ../../tsconfig.json",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@mochi/domain": "workspace:*",
+    "@mochi/ui": "workspace:*",
+    "@tauri-apps/api": "2.11.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4"
+  }
+}
