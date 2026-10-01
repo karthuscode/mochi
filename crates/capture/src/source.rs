@@ -366,8 +366,11 @@ impl<S: ContentSanitizer, C: Clock> SessionSource for CodexSessionSource<S, C> {
         if raw.is_empty() {
             return Err(IntakeError::Malformed);
         }
-        let payload: CodexHookPayload =
-            serde_json::from_slice(raw).map_err(|_| IntakeError::Malformed)?;
+        let payload: CodexHookPayload = serde_json::from_value(
+            mochi_privacy::parse_bounded_json(raw, MAX_PROVIDER_MESSAGE_BYTES)
+                .map_err(|_| IntakeError::Malformed)?,
+        )
+        .map_err(|_| IntakeError::Malformed)?;
         if payload.hook_event_name.is_empty() || payload.hook_event_name.len() > 64 {
             return Err(IntakeError::InvalidRequired("hook_event_name"));
         }
@@ -648,7 +651,7 @@ impl<S: ContentSanitizer, C: Clock> SessionSource for CodexSessionSource<S, C> {
             }
             _ => {
                 events.push(self.pending(
-                    hook,
+                    "unknown",
                     &session,
                     (turn.as_deref(), None),
                     None,

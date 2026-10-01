@@ -91,3 +91,23 @@ describe('coding session domain contract', () => {
     ).toThrow('event sequences must be positive and unique');
   });
 });
+
+it('preserves final-only Git context and rejects an invented baseline reason', () => {
+  const data = structuredClone(CLI_COMPLETE_SESSION);
+  if (data.gitContext.availability !== 'available') throw new Error('fixture');
+  const final = {
+    ...data,
+    gitContext: {
+      availability: 'final_only',
+      after: data.gitContext.after ?? data.gitContext.before,
+      baselineReason: 'not_captured',
+    },
+  };
+  expect(parseCodingSession(final).gitContext.availability).toBe('final_only');
+  expect(() =>
+    parseCodingSession({
+      ...final,
+      gitContext: { ...final.gitContext, baselineReason: 'made_up' },
+    }),
+  ).toThrow(DomainValidationError);
+});

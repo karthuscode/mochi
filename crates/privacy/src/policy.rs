@@ -113,6 +113,18 @@ impl FilePolicy {
         })
     }
 
+    /// Opaque revision of interpreted rules; never exposes their original spelling.
+    pub fn fingerprint(&self) -> String {
+        use sha2::{Digest, Sha256};
+        let mut digest = Sha256::new();
+        digest.update(POLICY_VERSION.as_bytes());
+        for rule in &self.ignore {
+            digest.update((rule.as_str().len() as u64).to_be_bytes());
+            digest.update(rule.as_str().as_bytes());
+        }
+        format!("{:x}", digest.finalize())
+    }
+
     pub fn root(&self) -> &Path {
         &self.root
     }

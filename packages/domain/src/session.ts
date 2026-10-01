@@ -368,7 +368,19 @@ export interface GitSnapshot {
   readonly warnings: readonly string[];
 }
 
+export type GitUnavailableReason =
+  | 'not_repository'
+  | 'not_authorized'
+  | 'collection_failed'
+  | 'not_captured'
+  | 'unknown';
+
 export type GitContext =
+  | {
+      readonly availability: 'final_only';
+      readonly after: GitSnapshot;
+      readonly baselineReason: GitUnavailableReason;
+    }
   | {
       readonly availability: 'available';
       readonly before: GitSnapshot;

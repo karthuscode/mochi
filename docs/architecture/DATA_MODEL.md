@@ -94,7 +94,7 @@ Retention of sanitized session events, Git snapshots, code context and analysis 
 
 | Action | Effects |
 |---|---|
-| Delete session | Current implementation marks the assembly group deleted, deletes the validated aggregate and cascading children, and retains assigned ingress as consumed so ordinary assembly cannot recreate it; later learning briefs add cancellation/recomputation |
+| Delete session | Cancel analysis, tombstone associated ingress UUID/source identities for at least seven days, delete owned ingress and validated aggregate with all learning children, retain a deleted episode/group metadata marker; no knowledge/review cache exists yet |
 | Delete project | Disable root policy first, cancel jobs, delete all project sessions and consent; preserve global concept registry only |
 | Reset concept progress | Delete its attempts/evidence/review history and session-concept links, rebuild record as NEW; retained lessons remain inert until a new encounter/practice; no retroactive exposure replay |
 | Delete review run | Delete its attempts and evidence, recompute affected knowledge/reviews; other session practice stays |
@@ -111,3 +111,12 @@ SQLite logical deletion is not a forensic-erasure guarantee. Checkpoint/truncate
 Export versioned JSON with projects aliases, session summaries, published sanitized lessons, assessments/attempts, evidence state, knowledge, and reviews. Re-sanitize on export and omit absolute roots, provider correlation IDs, key references, config backups, and payload diagnostics. Warn that source excerpts and personal learning history are included. Export is a user-selected local save, not a network upload. Import is deferred.
 
 Each migration runs atomically against synthetic populated fixtures and empty DB. Back up the sanitized DB locally before potentially destructive migrations; keep the backup ≤7 days, include it in deletion/reset inventory, and never upload it. Failure leaves previous DB usable or read-only with recovery instructions; never silently drop data. Index session(projectId,lastActivityAt), events(sessionId,sequence), jobs(status,createdAt), attempts(conceptId,submittedAt), evidence(conceptId,occurredAt), reviews(dueAt), and consent(projectId,epoch).
+
+
+## Internal MVP persisted amendment — schema 5
+
+Migrations 0001–0003 are unchanged. 0004 adds `capture_episodes` (source key, state, revision, continuation and truthful pause/restart/late flags) and immutable `episode_ingress` associations. 0005 adds `analysis_runs`, `learning_documents`, `selfcheck_questions`, `learning_exposures`, `selfcheck_reveals` and `selfcheck_attempts`, with session-owned cascading foreign keys and transactional publication/attempt idempotence. The future generic knowledge/review tables above are not implemented. Questions remain immutable; repeated publication does not promote knowledge.
+
+Current version-1 learning references are opaque `event:<uuid>` or `code:<role>:<sanitized-hash>` IDs resolved against the exact input manifest. Code evidence records a sanitized immutable excerpt/hash, relative path, snapshot time, first line and truncation. These IDs are not provider thread IDs or live working-tree references. Persisted domain Git context additionally supports `FinalOnly { after, baselineReason }`; it never fabricates a before snapshot.
+
+Analysis runs retain safe authorization metadata, not provider payload logs; the sanitized input/evidence copies exist only in a published validated document. Startup cancels unfinished runs rather than automatically resending. The internal publication includes explanation, questions, delayed variants and exposure, without mini challenge/knowledge/review or full ready status. Automatic 30-day partial-context expiry and export/reset UI are not implemented at this checkpoint; explicit ingress cutoff/checkpoint primitives and deletion are available. [Current limits and evidence](../implementation/INTERNAL_CLI_MVP.md).

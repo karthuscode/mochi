@@ -154,6 +154,28 @@ impl CodexInstaller {
     }
 
     pub fn prepare_install(&self, request: InstallRequest) -> Result<InstallPlan> {
+        self.prepare_install_mode(request, None)
+    }
+
+    /// Product capture reads current consent on every invocation. This preview is
+    /// still not consent; the core must publish the approved policy separately.
+    pub fn prepare_authorized_install(
+        &self,
+        request: InstallRequest,
+        policy_root: &Path,
+    ) -> Result<InstallPlan> {
+        if !policy_root.is_absolute() {
+            return Err(InstallError::InvalidRequest);
+        }
+        check_path(policy_root)?;
+        self.prepare_install_mode(request, Some(policy_root))
+    }
+
+    fn prepare_install_mode(
+        &self,
+        request: InstallRequest,
+        policy_root: Option<&Path>,
+    ) -> Result<InstallPlan> {
         if request.project_id.is_nil()
             || request.policy_revision == 0
             || !request.approved_root.is_absolute()
@@ -187,8 +209,16 @@ impl CodexInstaller {
             return Err(InstallError::InvalidRequest);
         }
         check_path(&request.spool_root)?;
-        let command = format!("{} capture --project-id {} --approved-root {} --client-surface cli --policy-revision {} --spool-root {}",
-            quote_path(&helper)?, request.project_id, quote_path(&root)?, request.policy_revision, quote_path(&request.spool_root)?);
+        let command = if let Some(policy_root) = policy_root {
+            format!(
+                "{} capture-authorized --project-id {} --policy-root {}",
+                quote_path(&helper)?,
+                request.project_id,
+                quote_path(policy_root)?
+            )
+        } else {
+            format!("{} capture --project-id {} --approved-root {} --client-surface cli --policy-revision {} --spool-root {}", quote_path(&helper)?, request.project_id, quote_path(&root)?, request.policy_revision, quote_path(&request.spool_root)?)
+        };
         let _lock = self.lock(&target)?;
         let before = load_target(&target)?;
         let receipt = self.receipt(&target, &before)?;

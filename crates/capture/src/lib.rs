@@ -1,3 +1,4 @@
+pub mod authorization;
 pub mod git;
 pub mod model;
 pub mod sanitize;

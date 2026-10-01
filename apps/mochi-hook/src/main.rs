@@ -17,9 +17,15 @@ const MAX_STDIN_BYTES: u64 = 1024 * 1024 + 1;
 
 fn main() {
     let mode = std::env::args().nth(1);
-    if mode.as_deref() == Some("capture") {
+    if matches!(mode.as_deref(), Some("capture" | "capture-authorized")) {
         std::panic::set_hook(Box::new(|_| {}));
-        let _ = catch_unwind(AssertUnwindSafe(run_capture));
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            if mode.as_deref() == Some("capture-authorized") {
+                run_authorized_capture();
+            } else {
+                run_capture();
+            }
+        }));
         return;
     }
     let code = match mode.as_deref() {
@@ -144,6 +150,53 @@ fn run_capture() {
             Err(_) => return,
         },
     };
+    capture_normalized(
+        project_id,
+        approved_root,
+        surface,
+        policy_revision,
+        spool_root,
+    );
+}
+
+fn run_authorized_capture() {
+    use mochi_capture::authorization::AuthorizationStore;
+    let Ok(options) = parse_options(std::env::args().skip(2)) else {
+        return;
+    };
+    if options.len() != 2 {
+        return;
+    }
+    let Some(id) = option(&options, "project-id").and_then(|v| Uuid::parse_str(v).ok()) else {
+        return;
+    };
+    let Some(root) = option(&options, "policy-root").map(PathBuf::from) else {
+        return;
+    };
+    let Ok(store) = AuthorizationStore::existing(root) else {
+        return;
+    };
+    let Ok(lease) = store.authorize(id) else {
+        return;
+    };
+    let policy = lease.policy();
+    capture_normalized(
+        id,
+        policy.approved_root.clone(),
+        ClientSurface::Cli,
+        policy.policy_revision,
+        policy.spool_root.clone(),
+    );
+    drop(lease);
+}
+
+fn capture_normalized(
+    project_id: Uuid,
+    approved_root: PathBuf,
+    surface: ClientSurface,
+    policy_revision: u64,
+    spool_root: PathBuf,
+) {
     let Ok(sanitizer) = CaptureSanitizer::new(&approved_root) else {
         return;
     };
@@ -155,14 +208,9 @@ fn run_capture() {
         sanitizer,
         SystemClock,
     );
-    let mut raw = Vec::new();
-    if std::io::stdin()
-        .take(MAX_STDIN_BYTES)
-        .read_to_end(&mut raw)
-        .is_err()
-    {
+    let Some(raw) = bounded_capture_stdin() else {
         return;
-    }
+    };
     let pending = match source.normalize(&raw) {
         Ok(events) => events,
         Err(error) => vec![source.metadata_gap(&error)],
@@ -175,6 +223,48 @@ fn run_capture() {
         &received_at,
         pending,
     );
+}
+
+/// Poll the inherited pipe with a total deadline; an open writer must never
+/// keep a Codex hook waiting. Timed-out input is discarded without durable text.
+#[cfg(unix)]
+fn bounded_capture_stdin() -> Option<Vec<u8>> {
+    use std::time::{Duration, Instant};
+    let deadline = Instant::now() + Duration::from_millis(750);
+    let mut bytes = Vec::new();
+    let mut chunk = [0u8; 8192];
+    loop {
+        let remaining = deadline.checked_duration_since(Instant::now())?;
+        let mut descriptor = libc::pollfd {
+            fd: libc::STDIN_FILENO,
+            events: libc::POLLIN,
+            revents: 0,
+        };
+        // Only this thread reads stdin; poll gates each bounded read.
+        let ready = unsafe { libc::poll(&mut descriptor, 1, remaining.as_millis().max(1) as i32) };
+        if ready < 0 && std::io::Error::last_os_error().kind() == std::io::ErrorKind::Interrupted {
+            continue;
+        }
+        if ready <= 0 || descriptor.revents & (libc::POLLERR | libc::POLLNVAL) != 0 {
+            return None;
+        }
+        let count =
+            unsafe { libc::read(libc::STDIN_FILENO, chunk.as_mut_ptr().cast(), chunk.len()) };
+        if count < 0 {
+            return None;
+        }
+        if count == 0 {
+            return Some(bytes);
+        }
+        bytes.extend_from_slice(&chunk[..count as usize]);
+        if bytes.len() as u64 >= MAX_STDIN_BYTES {
+            return Some(bytes);
+        }
+    }
+}
+#[cfg(not(unix))]
+fn bounded_capture_stdin() -> Option<Vec<u8>> {
+    None
 }
 
 fn run_inspect() -> Result<(), &'static str> {
@@ -242,6 +332,7 @@ fn parse_options(
                 | "role"
                 | "output"
                 | "integration-state-root"
+                | "policy-root"
         ) {
             return Err("unknown option");
         }

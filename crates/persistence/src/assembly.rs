@@ -16,7 +16,8 @@ pub const MAX_ASSEMBLY_EVENTS: usize = 20_000;
 pub const MAX_ASSEMBLY_BYTES: usize = 20 * 1024 * 1024;
 const MAX_IGNORED_BATCH: usize = 100;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AssemblySourceKey {
     pub project_id: ProjectId,
     pub provider: String,

@@ -68,10 +68,13 @@ impl IngressRepository for SqliteStore {
         let candidates = spool
             .scan_batch(limit)
             .map_err(|_| StorageError::InvalidInput)?;
-        if candidates.is_empty() {
+        let spool_state = spool.read_state().map_err(|_| StorageError::InvalidInput)?;
+        if let Some(timestamp) = &spool_state.last_eviction_at {
+            utc_millis(timestamp)?;
+        }
+        if candidates.is_empty() && self.spool_eviction_count()? >= spool_state.evicted_count {
             return Ok(ImportOutcome::default());
         }
-        let spool_state = spool.read_state().ok();
         let redactor = RedactionEngine::new().map_err(|_| StorageError::Serialization)?;
         let now = self.now()?;
         let now_unix_ms = utc_millis(&now)?;
@@ -89,9 +92,7 @@ impl IngressRepository for SqliteStore {
                     [now_unix_ms],
                 )
                 .map_err(map_sqlite)?;
-            if let Some(state) = spool_state {
-                record_spool_state(&transaction, &state, &now)?;
-            }
+            record_spool_state(&transaction, &spool_state, &now)?;
 
             for candidate in candidates {
                 let (token, data) = candidate.into_parts();
@@ -711,4 +712,20 @@ pub(crate) fn decode_ingress(
         record,
         imported_at: raw.19,
     })
+}
+
+impl SqliteStore {
+    /// Durable loss metadata, separate from captured provider events.
+    pub fn spool_eviction_count(&self) -> StorageResult<u64> {
+        let count: Option<i64> = self
+            .lock()?
+            .query_row(
+                "SELECT evicted_count FROM import_state WHERE singleton = 1",
+                [],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(map_sqlite)?;
+        u64::try_from(count.unwrap_or(0)).map_err(|_| StorageError::Corrupt)
+    }
 }

@@ -82,3 +82,6 @@ The website remains post-V1. No brief includes website implementation, backend d
 ## Internal CLI MVP checkpoint — 2026-10-01
 
 The user selected personal macOS/CLI use as an intermediate milestone. Execute the approved plan in bounded units: restart checkpoint; Brief 08 real-client acceptance; Briefs 09–12 and minimal local controls/session display; Briefs 13–19 analysis and explanation; Briefs 20–21 self-check experience. This does not mark a partial explanation as a full ready lesson or change the V1 alpha gate. Knowledge/review and external release remain later. Current implementation/validation state is recorded in [MVP_IMPLEMENTATION.md](MVP_IMPLEMENTATION.md).
+
+
+Internal MVP implementation amendment: Briefs 09–21 now have the bounded personal subset described in [INTERNAL_CLI_MVP.md](INTERNAL_CLI_MVP.md), including native controls and persisted self-checks. This does not automatically pass M3/G03 (live model quality), full M4 (mini challenge required), native/distribution gates, or the complete acceptance of every full-V1 UI/assessment format. Brief 22 is the next implementation step after the personal trial. Preserve the original release dependency sequence.

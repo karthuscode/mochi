@@ -2,7 +2,7 @@ use crate::{StorageError, StorageResult, error::map_sqlite};
 use rusqlite::{Connection, OptionalExtension, TransactionBehavior, params};
 use sha2::{Digest, Sha256};
 
-pub(crate) const LATEST_SCHEMA_VERSION: i64 = 3;
+pub(crate) const LATEST_SCHEMA_VERSION: i64 = 5;
 
 struct Migration {
     version: i64,
@@ -25,6 +25,16 @@ const MIGRATIONS: &[Migration] = &[
         version: 3,
         name: "session_assembly",
         sql: include_str!("migrations/0003_session_assembly.sql"),
+    },
+    Migration {
+        version: 4,
+        name: "capture_episodes",
+        sql: include_str!("migrations/0004_episodes.sql"),
+    },
+    Migration {
+        version: 5,
+        name: "learning",
+        sql: include_str!("migrations/0005_learning.sql"),
     },
 ];
 

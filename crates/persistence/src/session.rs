@@ -195,6 +195,24 @@ impl CodingSessionRepository for SqliteStore {
                 params![id.to_string(), now],
             )
             .map_err(map_sqlite)?;
+        transaction
+            .execute(
+                "UPDATE capture_episodes SET state='deleted',revision=revision+1 WHERE id=?1",
+                [id.to_string()],
+            )
+            .map_err(map_sqlite)?;
+        let expires = crate::project::tombstone_expiry(&now)?;
+        let expiry_ms = crate::connection::utc_millis(&expires)?;
+        let owned = "ingress_id IN (SELECT ingress_id FROM episode_ingress WHERE episode_id=?1 UNION SELECT ingress_id FROM ingress_assembly_state WHERE session_id=?1 AND state='assigned')";
+        for (column, kind) in [("ingress_id", "ingress"), ("source_identity_key", "source")] {
+            transaction.execute(&format!("INSERT OR REPLACE INTO ingress_tombstones(identity_key,identity_kind,reason,deleted_at,expires_at,expires_at_unix_ms) SELECT {column},?2,'session_deleted',?3,?4,?5 FROM ingress_events WHERE {owned}"),params![id.to_string(),kind,now,expires,expiry_ms]).map_err(map_sqlite)?;
+        }
+        transaction
+            .execute(
+                &format!("DELETE FROM ingress_events WHERE {owned}"),
+                [id.to_string()],
+            )
+            .map_err(map_sqlite)?;
         let deleted = transaction
             .execute("DELETE FROM sessions WHERE id = ?1", [id.to_string()])
             .map_err(map_sqlite)?;
@@ -214,6 +232,22 @@ pub(crate) fn insert_session_transaction(
     session: &CodingSession,
     now: &str,
 ) -> StorageResult<SessionInsertOutcome> {
+    write_session_transaction(transaction, session, now, false)
+}
+
+pub(crate) fn replace_session_transaction(
+    transaction: &Transaction<'_>,
+    session: &CodingSession,
+    now: &str,
+) -> StorageResult<SessionInsertOutcome> {
+    write_session_transaction(transaction, session, now, true)
+}
+fn write_session_transaction(
+    transaction: &Transaction<'_>,
+    session: &CodingSession,
+    now: &str,
+    replace: bool,
+) -> StorageResult<SessionInsertOutcome> {
     let canonical = session
         .to_json()
         .map_err(|_| StorageError::DomainValidation)?;
@@ -228,11 +262,27 @@ pub(crate) fn insert_session_transaction(
         .optional()
         .map_err(map_sqlite)?;
     if let Some(existing) = existing {
-        return if existing == content_hash {
-            Ok(SessionInsertOutcome::Existing)
-        } else {
-            Err(StorageError::Constraint)
-        };
+        if existing == content_hash {
+            return Ok(SessionInsertOutcome::Existing);
+        }
+        if !replace {
+            return Err(StorageError::Constraint);
+        }
+        for table in [
+            "command_executions",
+            "session_events",
+            "tool_executions",
+            "file_changes",
+            "git_snapshots",
+            "session_turns",
+        ] {
+            transaction
+                .execute(
+                    &format!("DELETE FROM {table} WHERE session_id=?1"),
+                    [data.id.to_string()],
+                )
+                .map_err(map_sqlite)?;
+        }
     }
     transaction
         .execute(
@@ -240,7 +290,7 @@ pub(crate) fn insert_session_transaction(
                 id, project_id, schema_version, started_at, started_at_unix_ms, ended_at, status,
                 source_json, capture_capabilities_json, capture_completeness_json,
                 content_hash, created_at
-             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12) ON CONFLICT(id) DO UPDATE SET schema_version=excluded.schema_version, started_at=excluded.started_at, started_at_unix_ms=excluded.started_at_unix_ms, ended_at=excluded.ended_at,status=excluded.status,source_json=excluded.source_json,capture_capabilities_json=excluded.capture_capabilities_json,capture_completeness_json=excluded.capture_completeness_json,content_hash=excluded.content_hash",
             params![
                 data.id.to_string(),
                 data.project_id.to_string(),
@@ -390,7 +440,7 @@ fn insert_git_context(
                 insert_git_row(transaction, session_id, "after", after)?;
             }
         }
-        GitContext::Unavailable { .. } => {
+        GitContext::Unavailable { .. } | GitContext::FinalOnly { .. } => {
             insert_git_row(transaction, session_id, "unavailable", context)?
         }
     }
@@ -471,7 +521,11 @@ fn load_git_context(
             before: Box::new(before),
             after: after.map(Box::new),
         }),
-        (None, Some(context @ GitContext::Unavailable { .. })) if after.is_none() => Ok(context),
+        (None, Some(context @ (GitContext::Unavailable { .. } | GitContext::FinalOnly { .. })))
+            if after.is_none() =>
+        {
+            Ok(context)
+        }
         _ => Err(StorageError::Corrupt),
     }
 }

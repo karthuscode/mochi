@@ -926,3 +926,73 @@ fn git(root: &Path, args: &[&str]) {
         .expect("git command starts");
     assert!(status.success(), "git command failed: {args:?}");
 }
+
+#[test]
+fn strict_normalization_rejects_duplicate_keys_and_unknown_hook_names_are_safe_metadata() {
+    let temp = TempDir::new().expect("isolated project");
+    let root = temp.path().canonicalize().expect("root");
+    let source = source(&root);
+    let duplicate=format!("{{\"hook_event_name\":\"UserPromptSubmit\",\"hook_event_name\":\"Stop\",\"session_id\":\"s\",\"cwd\":{}}}",serde_json::to_string(&root).expect("path"));
+    assert!(source.normalize(duplicate.as_bytes()).is_err());
+    let marker = "sk-syntheticFixture012345678901234567890";
+    let events = source
+        .normalize(&payload(&root, marker, json!({})))
+        .expect("safe unknown gap");
+    let encoded = serde_json::to_string(&events[0].event).expect("encoded");
+    assert!(!encoded.contains(marker));
+    assert_eq!(events[0].source_event_type, "unknown");
+}
+#[cfg(unix)]
+#[test]
+fn spool_scan_rejects_symlink_without_reading_or_deleting_target() {
+    let temp = TempDir::new().expect("isolated spool");
+    let root = temp.path().canonicalize().expect("root");
+    let dir = root.join("spool");
+    std::fs::create_dir(&dir).expect("spool");
+    let target = root.join("outside.txt");
+    std::fs::write(&target, "SYNTHETIC_OUTSIDE_SENTINEL").expect("target");
+    let path = dir.join(format!("{:020}-{}.json", 1, Uuid::new_v4()));
+    std::os::unix::fs::symlink(&target, &path).expect("symlink");
+    let spool = Spool::new(dir, SpoolLimits::default());
+    let candidates = spool.scan_batch(100).expect("safe scan");
+    assert_eq!(candidates.len(), 1);
+    assert!(matches!(
+        candidates[0].data(),
+        SpoolCandidateData::Rejected { .. }
+    ));
+    spool
+        .acknowledge(&[candidates[0].token().clone()])
+        .expect("exact ack");
+    assert!(!path.exists());
+    assert_eq!(
+        std::fs::read_to_string(target).expect("target unchanged"),
+        "SYNTHETIC_OUTSIDE_SENTINEL"
+    );
+}
+
+#[test]
+fn spool_loss_state_rejects_oversize_duplicate_keys_and_symlinks() {
+    let temp = TempDir::new().unwrap();
+    let spool = Spool::new(temp.path().to_owned(), SpoolLimits::default());
+    let state = temp.path().join("spool-state.json");
+    for bytes in [
+        vec![b'x'; 4097],
+        br#"{"schemaVersion":1,"schemaVersion":1,"evictedCount":1,"lastEvictionAt":null}"#.to_vec(),
+        br#"{"schemaVersion":99,"evictedCount":1,"lastEvictionAt":null}"#.to_vec(),
+    ] {
+        fs::write(&state, bytes).unwrap();
+        assert!(spool.read_state().is_err());
+    }
+    #[cfg(unix)]
+    {
+        fs::remove_file(&state).unwrap();
+        let target = temp.path().join("outside");
+        fs::write(
+            &target,
+            br#"{"schemaVersion":1,"evictedCount":1,"lastEvictionAt":null}"#,
+        )
+        .unwrap();
+        std::os::unix::fs::symlink(&target, &state).unwrap();
+        assert!(spool.read_state().is_err());
+    }
+}

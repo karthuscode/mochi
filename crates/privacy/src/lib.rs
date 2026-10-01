@@ -1,4 +1,6 @@
 //! Provider-independent, fail-closed file/path policy and content redaction.
+mod json;
+pub use json::{parse_bounded_json, InvalidJson};
 mod policy;
 mod redaction;
 

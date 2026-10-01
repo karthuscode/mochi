@@ -20,6 +20,11 @@ pub struct StoredProject {
 pub trait ProjectRepository {
     fn create_project(&self, project: &Project, policy: CapturePolicy) -> StorageResult<()>;
     fn get_project(&self, id: ProjectId) -> StorageResult<Option<StoredProject>>;
+    fn list_projects(
+        &self,
+        after: Option<ProjectId>,
+        limit: usize,
+    ) -> StorageResult<Vec<StoredProject>>;
     fn update_capture_policy(
         &self,
         id: ProjectId,
@@ -92,6 +97,36 @@ impl ProjectRepository for SqliteStore {
             .map_err(map_sqlite)?
             .map(|row| decode_project(id, row))
             .transpose()
+    }
+
+    fn list_projects(
+        &self,
+        after: Option<ProjectId>,
+        limit: usize,
+    ) -> StorageResult<Vec<StoredProject>> {
+        if limit == 0 || limit > 100 {
+            return Err(StorageError::InvalidInput);
+        }
+        let ids = {
+            let c = self.lock()?;
+            let mut stmt=c.prepare("SELECT id FROM projects WHERE deleted_at IS NULL AND id>?1 ORDER BY id LIMIT ?2").map_err(map_sqlite)?;
+            let rows = stmt
+                .query_map(
+                    params![
+                        after.map(|id| id.to_string()).unwrap_or_default(),
+                        limit as i64
+                    ],
+                    |r| r.get::<_, String>(0),
+                )
+                .map_err(map_sqlite)?;
+            rows.collect::<Result<Vec<_>, _>>().map_err(map_sqlite)?
+        };
+        ids.into_iter()
+            .map(|s| {
+                self.get_project(ProjectId::parse(&s).map_err(|_| StorageError::Corrupt)?)?
+                    .ok_or(StorageError::Corrupt)
+            })
+            .collect()
     }
 
     fn update_capture_policy(
@@ -180,6 +215,7 @@ impl ProjectRepository for SqliteStore {
                 params![id.to_string(), now],
             )
             .map_err(map_sqlite)?;
+        transaction.execute("UPDATE capture_episodes SET state='deleted',revision=revision+1 WHERE project_id=?1",[id.to_string()]).map_err(map_sqlite)?;
         transaction
             .execute(
                 "DELETE FROM sessions WHERE project_id = ?1",

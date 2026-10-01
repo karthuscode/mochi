@@ -58,3 +58,8 @@ The following gates passed on macOS 26.5.1 arm64:
 - `pnpm desktop:build`
 
 The Rust workspace ran 50 unit tests, including 17 persistence tests and 17 capture tests; the frontend ran 18 tests. The native release build produced a local unsigned `Mochi.app` bundle. This implementation does not claim production capture, automatic retention scheduling, session assembly, analysis, learning behavior, signed distribution, or persistence UI.
+
+
+## Later MVP amendment
+
+The Brief 03 evidence above remains historical. The personal CLI MVP adds migrations 0004 (capture episodes/immutable ingress associations) and 0005 (analysis runs, validated learning documents, questions, exposures, reveals and attempts); schema is now 5. Associated-ingress session deletion now tombstones/deletes evidence and cascades learning children in the same storage transaction. Revision writes preserve the session parent identity. Empty spool scans also persist loss metadata. Native startup imports only the separately authorized production spool through narrow application controls; it never imports the legacy prototype spool. [Current schema/runtime evidence](INTERNAL_CLI_MVP.md).

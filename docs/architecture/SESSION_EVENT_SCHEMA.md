@@ -93,7 +93,7 @@ Brief 02 implements that completed provider-independent envelope in `crates/doma
 - Mint IDs once before sanitized spool write; replay preserves them. If a provider has no event ID, helper retry reuses its ingress ID. Do not dedupe solely by text hash: identical prompts can be real separate events.
 - `sequence` records import order. Display occurrence time where reliable; fall back to receipt/sequence. Late events never reverse a finalized lifecycle silently.
 - Missing pairs produce unknown duration/status, not synthetic tool completion. Persist safe gap metadata. Future corrupt records are discarded without logging their raw content.
-- Brief 04 normal assembly is one-shot per stable source-session group. Evidence arriving after assembly is retained and marked ignored for ordinary assembly rather than silently mutating the validated aggregate. Brief 11 owns revisioned late-event amendments and continuation-episode lifecycle; later learning briefs own stale analysis behavior.
+- Brief 04 remains the historical one-shot foundation. The implemented Brief 11 episode engine now revises live aggregates, treats turn Stop as idle, closes on explicit source end/user Finish, starts continuation episodes for new work, and records late non-start amendments with a higher revision. Associations and aggregates commit atomically; input changes make prior learning stale. Receive-sequence gaps remain preserved without synthetic events.
 
 ## Session lifecycle and analysis status
 
@@ -115,3 +115,8 @@ Analysis statuses: `not_requested`, `awaiting_consent`, `queued`, `running`, `re
 ## Validation and limits
 
 Reject invalid UUIDs, timestamps, negative counts/durations, duplicate object keys, absolute/out-of-root payload paths, invalid enum values, and oversized envelopes. Provider raw read cap 1 MiB; event serialized cap 64 KiB; text field 8 KiB; per-episode 20,000 events or 20 MiB. The shared `redaction-v1` engine sanitizes the full bounded input before truncation; spool writes and SQLite ingress validate the resulting record again. If redaction/validation cannot safely complete, emit a metadata-only gap where possible and drop content. Exercise replay, missing boundaries, late events, malformed input, overlapping sessions, and pause in [validation](../implementation/VALIDATION_PLAN.md).
+
+
+## Authorized production delivery amendment
+
+The app reads only its separate production spool and runs bounded import/episode assembly. The helper command reads current private policy under a lease before payload persistence; missing/stale/revoked consent drops content. Import validates strict bounded JSON/identity and commits before exact-token acknowledgement. Durable spool eviction counters warn of incomplete coverage without manufacturing a session event. Startup never installs hooks or imports the old prototype spool. Session deletion tombstones associated ingress before deleting it; new source work can still form a new continuation. [Current implementation](../implementation/INTERNAL_CLI_MVP.md).

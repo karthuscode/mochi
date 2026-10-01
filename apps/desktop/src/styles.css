@@ -41,3 +41,146 @@ button:disabled {
     color: #fafaf9;
   }
 }
+
+.local-capture {
+  margin-top: 2.5rem;
+}
+.section-heading,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.section-heading {
+  justify-content: space-between;
+}
+label {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+input,
+select {
+  font: inherit;
+  padding: 0.65rem;
+  border: 1px solid #8b8b8b;
+  border-radius: 0.4rem;
+  color: inherit;
+  background: transparent;
+}
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+}
+.checkbox input {
+  margin-top: 0.25rem;
+}
+.panel {
+  border: 1px solid #8b8b8b;
+  padding: 1.2rem;
+  border-radius: 0.6rem;
+  margin: 1.4rem 0;
+}
+.muted {
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.error {
+  border-left: 3px solid currentColor;
+  padding-left: 0.8rem;
+}
+summary {
+  cursor: pointer;
+  padding: 0.7rem 0;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  padding: 1rem;
+  border: 1px solid #8b8b8b;
+  border-radius: 0.4rem;
+  max-height: 30rem;
+  overflow: auto;
+}
+.session-list {
+  list-style: none;
+  padding: 0;
+}
+.session-list li {
+  margin: 0.6rem 0;
+}
+.session-list button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  width: 100%;
+  text-align: left;
+}
+.session-list button[aria-pressed='true'] {
+  border-width: 2px;
+}
+.events {
+  padding-left: 1.4rem;
+}
+.events li {
+  margin: 1.2rem 0;
+}
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+@media (min-width: 1000px) {
+  .app-frame {
+    max-width: 72rem;
+  }
+  .session-layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 1fr) minmax(0, 2fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto;
+  }
+}
+
+textarea {
+  display: block;
+  min-height: 7rem;
+  width: 100%;
+  font: inherit;
+  padding: 0.65rem;
+  border: 1px solid #8b8b8b;
+  border-radius: 0.4rem;
+  color: inherit;
+  background: transparent;
+}
+textarea:focus-visible,
+a:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+h4,
+h5,
+h6 {
+  font-size: 1.05rem;
+  margin: 1.4rem 0 0.5rem;
+}
+.confidence {
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid currentColor;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.3rem;
+}
+.learning a {
+  overflow-wrap: anywhere;
+}

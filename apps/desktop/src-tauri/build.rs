@@ -1,7 +1,30 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tauri_build::try_build(
-        tauri_build::Attributes::new()
-            .app_manifest(tauri_build::AppManifest::new().commands(&["get_app_info"])),
-    )?;
+    tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
+        tauri_build::AppManifest::new().commands(&[
+            "get_app_info",
+            "local_status",
+            "list_projects",
+            "approve_project",
+            "preview_connection",
+            "apply_connection",
+            "set_tracking",
+            "pause_all_capture",
+            "list_sessions",
+            "session_detail",
+            "finish_session",
+            "delete_session",
+            "delete_project",
+            "analysis_status",
+            "analysis_permission",
+            "store_api_key",
+            "delete_api_key",
+            "preview_analysis",
+            "approve_analysis",
+            "cancel_analysis",
+            "learning_document",
+            "submit_selfcheck",
+            "reveal_selfcheck",
+        ]),
+    ))?;
     Ok(())
 }

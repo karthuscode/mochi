@@ -4,7 +4,7 @@
 
 Mochi is a local-first desktop learning companion for developers who build with AI and want to understand what they built. V1 is planned to turn approved Codex sessions and Git evidence into focused lessons, practice and later review.
 
-**Current status: Brief 08 native installer implemented and validated with a real CLI task.** Read-only detection remains separate from the new explicit, preview-approved project hook installer. Installation preserves unrelated configuration and supports upgrade, rollback, disconnect and private recovery. [Installer evidence](docs/implementation/CODEX_INTEGRATION_INSTALLER.md) records the contracts and successful CLI 0.151.0 install/trust/task/disconnect gate. The [internal CLI MVP execution record](docs/implementation/MVP_IMPLEMENTATION.md) tracks the approved staged plan. Assembly remains explicit with no startup trigger, IPC or UI. CLI 0.151.0 is the historical verified baseline and the installed version; Desktop remains partial. Production capture and learning are not implemented.
+**Current status: personal Codex CLI learning MVP implementation.** The desktop now has explicit project approval/connection, consent-controlled continuous capture, session history and revisioned assembly, filtered Git context, an exact analysis-send preview, macOS Keychain BYOK, and persisted explanations/self-checks. Remote analysis defaults off each run. The [trial guide and limitations](docs/implementation/INTERNAL_CLI_MVP.md) explain how to test it; [execution evidence](docs/implementation/MVP_IMPLEMENTATION.md) distinguishes automated/native verification from the complete live CLI/BYOK and model-quality gates still required. CLI 0.151.0 is the verified installation baseline; Desktop remains partial. This is an internal test build, before mini challenges, knowledge/review and external distribution.
 
 ## Development
 
@@ -66,7 +66,7 @@ cargo test -p mochi-integration --locked
 
 Brief 08 also adds explicit developer commands `connect`, `disconnect`, and `rollback-integration`, requiring an exact displayed approval token. They are not automatic production setup. See the [installer report](docs/implementation/CODEX_INTEGRATION_INSTALLER.md) before using them; do not point test flows at an unapproved project or user configuration.
 
-The helper's production-default spool is `~/Library/Application Support/dev.mochi.desktop/capture/v1/spool`. The `--spool-root` override is for isolated development tests. Hook trust remains a manual Codex review; installation can use the explicit Brief 08 flow. Never replace an existing hook file wholesale.
+The legacy developer helper spool is `~/Library/Application Support/dev.mochi.desktop/capture/v1/spool`. The app uses a separate `capture-v2-spool` inside Tauri app data and never imports the legacy spool automatically. Authorized production capture obtains the approved root, spool and revision from current private policy; `--spool-root` belongs to the legacy isolated developer flow. Hook trust remains a manual Codex review; installation can use the explicit Brief 08 flow. Never replace an existing hook file wholesale.
 
 Focused commands: `pnpm test:frontend`, `pnpm test:rust`, `pnpm lint:frontend`, `pnpm lint:rust`. Rust checks require the native prerequisites; run `pnpm build` before direct release-mode Cargo commands so embedded frontend assets exist. Normal `desktop:build` handles this automatically.
 
@@ -76,7 +76,7 @@ Local output: `apps/desktop/dist/`, `target/debug/mochi-desktop`, and `target/re
 
 ```text
 apps/desktop/
-  src/                    Minimal React shell; native/ holds the typed IPC adapter
+  src/                    Project/session and internal learning controls; typed IPC
   src-tauri/              Rust entry points, commands, Tauri configuration/capabilities
 apps/mochi-hook/          Standalone trusted-hook bridge and developer inspector
 crates/capture/           Provider adapter, normalized ingress, sanitizer, spool, Git context
@@ -84,7 +84,9 @@ crates/privacy/           Shared file and path policy
 crates/domain/            Authoritative provider-independent coding-session model
 crates/persistence/       SQLite migrations, ingress/project/session repositories
 crates/assembly/          Deterministic persisted-evidence to CodingSession assembly
-crates/integration/       Provider-independent detection contract and native Codex detector
+crates/integration/       Read-only detection and preview-approved owned hook installer
+crates/bridge/            Current consent, helper policy, import and Git coordination
+crates/learning/          Analysis/reference/ranking/self-check validation and grading
 packages/domain/          Readonly matching TS contracts, parser, helpers, shared fixtures
 packages/ui/              One reusable presentation wrapper; no native access
 docs/                     Authoritative product and architecture specifications
@@ -92,7 +94,7 @@ docs/                     Authoritative product and architecture specifications
 Cargo.toml                Rust workspace; root Cargo.lock pins dependency resolution
 ```
 
-Rust owns native integration, privacy, persistence and deterministic learning behavior. `crates/integration` owns the generic read-only detection contract and Codex-specific native detector. `crates/privacy` owns the shared file/path decision contract. `crates/domain` owns validated domain invariants; React consumes narrow IPC, while domain TypeScript holds checked matching contracts and pure helpers. `crates/persistence` owns bundled SQLite, migrations, policy-checked evidence import, replay tombstones, and validated session repositories. `crates/assembly` owns deterministic evidence interpretation and delegates its atomic write to persistence. Remote analysis, learning logic, automatic assembly, and product capture screens remain unimplemented.
+Rust owns native integration, privacy, persistence and deterministic learning behavior. `crates/integration` owns the generic read-only detection contract and Codex-specific native detector. `crates/privacy` owns the shared file/path decision contract. `crates/domain` owns validated domain invariants; React consumes narrow IPC, while domain TypeScript holds checked matching contracts and pure helpers. `crates/persistence` owns bundled SQLite, migrations, policy-checked evidence import, replay tombstones, and validated session repositories. `crates/assembly` owns deterministic evidence interpretation and delegates its atomic write to persistence. The core runs bounded import/assembly for already authorized production capture, while the separate analysis service requires exact explicit send approval. Internal learning controls are implemented; knowledge/review and full V1 screens remain future work.
 
 ## Product boundaries
 
@@ -128,9 +130,10 @@ Rust owns native integration, privacy, persistence and deterministic learning be
 
 ## Next task
 
-Brief 07 implements read-only Codex detection and capability reporting. Brief 08 adds the native, explicitly approved installer and developer connection flow. Its real Codex trust/task validation passed; the next bounded task is **Brief 09 — Production Event Bridge**. Follow the bounded units in [MVP implementation](docs/implementation/MVP_IMPLEMENTATION.md). Each implementation request must remain bounded to its assigned brief.
+Complete the personal synthetic CLI/BYOK trial in [the MVP guide](docs/implementation/INTERNAL_CLI_MVP.md), including human model-quality review. The next product implementation is Brief 22 (text-only mini challenge), followed by the existing knowledge/review sequence. The current checkpoint does not satisfy full V1 ready-lesson or distribution acceptance. Do not implement further roadmap work without an explicit task.
 
 ## Documentation maintenance
+
 
 Technical identifiers and documents use English; initial product UI is English. Localization is deferred. Each specialized spec names its authority. Keep shared terms, limits, statuses, consent, and brief dependencies aligned. Record changes in [DECISIONS.md](docs/product/DECISIONS.md), update affected documents in the same change, and run the documentation checks in [VALIDATION_PLAN.md](docs/implementation/VALIDATION_PLAN.md).
 

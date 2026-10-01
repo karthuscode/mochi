@@ -209,7 +209,10 @@ function validateGit(value: unknown): void {
     );
     return;
   }
-  if (context.availability !== 'available') {
+  if (
+    context.availability !== 'available' &&
+    context.availability !== 'final_only'
+  ) {
     throw new DomainValidationError(
       'gitContext.availability has an invalid value',
     );
@@ -247,6 +250,21 @@ function validateGit(value: unknown): void {
       throw new DomainValidationError(`${name}.truncated must be boolean`);
     }
   };
+  if (context.availability === 'final_only') {
+    enumValue(
+      context.baselineReason,
+      new Set([
+        'not_repository',
+        'not_authorized',
+        'collection_failed',
+        'not_captured',
+        'unknown',
+      ]),
+      'gitContext.baselineReason',
+    );
+    validateSnapshot(context.after, 'gitContext.after');
+    return;
+  }
   validateSnapshot(context.before, 'gitContext.before');
   if (context.after !== null) {
     validateSnapshot(context.after, 'gitContext.after');

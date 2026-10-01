@@ -105,6 +105,11 @@ pub enum GitUnavailableReason {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "availability", rename_all = "snake_case", deny_unknown_fields)]
 pub enum GitContext {
+    FinalOnly {
+        after: Box<GitSnapshot>,
+        #[serde(rename = "baselineReason")]
+        baseline_reason: GitUnavailableReason,
+    },
     Available {
         before: Box<GitSnapshot>,
         after: Option<Box<GitSnapshot>>,
@@ -116,6 +121,9 @@ pub enum GitContext {
 
 impl GitContext {
     pub fn validate(&self) -> DomainResult<()> {
+        if let Self::FinalOnly { after, .. } = self {
+            after.validate()?;
+        }
         if let Self::Available { before, after } = self {
             before.validate()?;
             if let Some(after) = after {

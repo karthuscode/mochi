@@ -199,7 +199,10 @@ pub(crate) fn valid_capture_command(command: &str, helper: &Path) -> bool {
         return false;
     };
     if words.first().map(String::as_str) != helper.to_str()
-        || words.get(1).map(String::as_str) != Some("capture")
+        || !matches!(
+            words.get(1).map(String::as_str),
+            Some("capture" | "capture-authorized")
+        )
     {
         return false;
     }
@@ -212,6 +215,15 @@ pub(crate) fn valid_capture_command(command: &str, helper: &Path) -> bool {
         if fields.insert(pair[0].as_str(), pair[1].as_str()).is_some() {
             return false;
         }
+    }
+    if words.get(1).map(String::as_str) == Some("capture-authorized") {
+        return fields.len() == 2
+            && fields
+                .get("--project-id")
+                .is_some_and(|s| uuid::Uuid::parse_str(s).is_ok_and(|id| !id.is_nil()))
+            && fields
+                .get("--policy-root")
+                .is_some_and(|s| Path::new(s).is_absolute());
     }
     (fields.len() == 4 || fields.len() == 5)
         && fields

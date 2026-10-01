@@ -111,10 +111,10 @@ fn opens_private_database_and_reopens_migrations_idempotently() {
     let root = TempDir::new().expect("temp root");
     let path = root.path().join("app/mochi.sqlite3");
     let first = SqliteStore::open(&path, Arc::new(FixedClock)).expect("first open");
-    assert_eq!(first.schema_version(), Ok(3));
+    assert_eq!(first.schema_version(), Ok(5));
     drop(first);
     let second = SqliteStore::open(&path, Arc::new(FixedClock)).expect("second open");
-    assert_eq!(second.schema_version(), Ok(3));
+    assert_eq!(second.schema_version(), Ok(5));
     #[cfg(unix)]
     {
         assert_eq!(
@@ -249,7 +249,7 @@ fn migration_three_upgrades_brief_three_data_without_rewriting_it() {
     drop(connection);
 
     let upgraded = SqliteStore::open(&path, Arc::new(FixedClock)).expect("migration applies");
-    assert_eq!(upgraded.schema_version(), Ok(3));
+    assert_eq!(upgraded.schema_version(), Ok(5));
     assert_eq!(
         upgraded
             .page_ingress(project(root.path()).id, None, None)
@@ -839,4 +839,115 @@ fn corrupt_database_is_rejected_without_replacement() {
         Err(StorageError::Corrupt)
     ));
     assert_eq!(fs::read(path).unwrap(), bytes);
+}
+
+#[test]
+fn final_only_git_round_trips_without_inventing_a_baseline() {
+    let root = TempDir::new().unwrap();
+    let store = store(&root);
+    create_project(&store, root.path(), 1);
+    let mut data = fixture_session().into_data();
+    let mochi_domain::GitContext::Available { before, after } = data.git_context else {
+        panic!("fixture has Git")
+    };
+    data.git_context = mochi_domain::GitContext::FinalOnly {
+        after: after.unwrap_or(before),
+        baseline_reason: mochi_domain::GitUnavailableReason::NotCaptured,
+    };
+    let session = CodingSession::new(data).unwrap();
+    store.insert_session(&session).unwrap();
+    assert_eq!(store.get_session(session.data().id).unwrap(), Some(session));
+}
+
+#[test]
+fn empty_spool_evictions_are_durable_and_malformed_state_does_not_ack() {
+    let temp = TempDir::new().unwrap();
+    let store = store(&temp);
+    let spool_root = temp.path().join("spool");
+    fs::create_dir(&spool_root).unwrap();
+    let spool = Spool::new(spool_root.clone(), SpoolLimits::default());
+    fs::write(
+        spool_root.join("spool-state.json"),
+        format!(r#"{{"schemaVersion":1,"evictedCount":7,"lastEvictionAt":"{NOW}"}}"#),
+    )
+    .unwrap();
+    assert_eq!(
+        store.import_spool_batch(&spool, 100).unwrap(),
+        ImportOutcome::default()
+    );
+    assert_eq!(store.spool_eviction_count().unwrap(), 7);
+    assert_eq!(
+        store.import_spool_batch(&spool, 100).unwrap(),
+        ImportOutcome::default()
+    );
+    assert_eq!(
+        store
+            .lock()
+            .unwrap()
+            .query_row(
+                "SELECT COUNT(*) FROM ingress_rejections WHERE reason='spool_eviction'",
+                [],
+                |r| r.get::<_, i64>(0)
+            )
+            .unwrap(),
+        1
+    );
+    let event = spool_root.join(format!("00000000000000000001-{}.json", Uuid::new_v4()));
+    fs::write(&event, "malformed synthetic payload").unwrap();
+    fs::write(spool_root.join("spool-state.json"), vec![b'x'; 4097]).unwrap();
+    assert!(store.import_spool_batch(&spool, 100).is_err());
+    assert!(event.exists());
+    assert_eq!(store.spool_eviction_count().unwrap(), 7);
+}
+
+#[test]
+fn episode_and_learning_migrations_preserve_existing_sessions_and_evidence() {
+    let temp = TempDir::new().unwrap();
+    let path = temp.path().join("app/mochi.sqlite3");
+    let store = store(&temp);
+    create_project(&store, temp.path(), 1);
+    let session = fixture_session();
+    store.insert_session(&session).unwrap();
+    let spool_root = TempDir::new().unwrap();
+    let spool = spool(&spool_root);
+    spool
+        .append(
+            Uuid::parse_str(PROJECT_ID).unwrap(),
+            source(),
+            NOW,
+            vec![pending(
+                "upgrade-evidence",
+                "synthetic preserved evidence",
+                1,
+            )],
+        )
+        .unwrap();
+    store.import_spool_batch(&spool, 100).unwrap();
+    let before = store
+        .page_ingress(project(temp.path()).id, None, None)
+        .unwrap();
+    drop(store);
+    let c = Connection::open(&path).unwrap();
+    c.execute_batch(
+        "PRAGMA foreign_keys=OFF;
+        DROP TABLE selfcheck_attempts; DROP TABLE selfcheck_reveals;
+        DROP TABLE learning_exposures; DROP TABLE selfcheck_questions;
+        DROP TABLE learning_documents; DROP TABLE analysis_runs;
+        DROP TABLE episode_ingress; DROP TABLE capture_episodes;
+        DELETE FROM schema_migrations WHERE version>=4;",
+    )
+    .unwrap();
+    drop(c);
+    let upgraded = SqliteStore::open(&path, Arc::new(FixedClock)).unwrap();
+    assert_eq!(upgraded.schema_version().unwrap(), 5);
+    assert_eq!(
+        upgraded.get_session(session.data().id).unwrap(),
+        Some(session)
+    );
+    assert_eq!(
+        upgraded
+            .page_ingress(project(temp.path()).id, None, None)
+            .unwrap(),
+        before
+    );
 }

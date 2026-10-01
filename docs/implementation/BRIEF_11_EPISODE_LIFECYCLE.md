@@ -1,0 +1,9 @@
+# Brief 11 — Revisioned episode lifecycle
+
+Authorized under the internal CLI MVP. Dependencies: 09 authorized helper, 10 strict normalization, 04 deterministic reconstruction. Current one-shot assembly cannot be polled while coding: it ignores later evidence. Add an independent additive episode repository; retain legacy assembly history and migrations unchanged.
+
+Outcome: live persisted normalized evidence updates one validated aggregate atomically with ingress associations and an increasing revision. Provider turn completion makes it idle, not finalized. Proven SessionEnd closes an episode; user Finish can close partial evidence without inventing a provider stop or command result. Subsequent start/prompt creates a continuation; late correlated evidence revises a finalized aggregate with a visible late-evidence flag. Restart marks open episodes interrupted, resume requires reliable identity; missing boundaries remain partial. Pause is recorded as a coverage warning. Deleted episode identities/associations prevent replay from recreating its aggregate.
+
+Add migration 0004 with episode headers, ordered ingress associations and revision/finalization metadata. Keep domain aggregates validated through `CodingSession::new`; extend reconstruction to accept a core episode ID. No learning rows or analysis requests yet. Episode metadata owns continuation/revision/capture lifecycle, distinct from domain event/command outcomes. Bounds remain 25 candidates, 20k events/20MiB; operations use immediate transactions and expected revisions. No full-Git reads or private transcript parser.
+
+Files: `crates/persistence` episode repository/migration, `crates/assembly` lifecycle engine and fixtures; native startup wiring follows the minimal UI checkpoint. Validate active→idle→closed, continuation, restart, late revision, duplicates, incomplete tools, pause/delete and transactional failure. Record checks and limits before entering Brief 12.

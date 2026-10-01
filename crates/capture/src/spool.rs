@@ -203,7 +203,7 @@ impl Spool {
         paths
             .into_iter()
             .map(|path| {
-                let bytes = fs::read(path).map_err(|_| SpoolError::Io)?;
+                let bytes = read_bounded_record(&path, self.limits.max_event_bytes)?;
                 if bytes.len() > self.limits.max_event_bytes {
                     return Err(SpoolError::InvalidState);
                 }
@@ -219,18 +219,21 @@ impl Spool {
         if limit == 0 || !self.root.exists() {
             return Ok(Vec::new());
         }
-        let mut entries = fs::read_dir(&self.root)
-            .map_err(|_| SpoolError::Io)?
-            .filter_map(Result::ok)
-            .filter(|entry| {
-                entry
-                    .file_name()
-                    .to_str()
-                    .is_some_and(|name| name.ends_with(".json") && name != "spool-state.json")
-            })
-            .collect::<Vec<_>>();
-        entries.sort_by_key(|entry| entry.file_name());
-        entries.truncate(limit.min(MAX_SCAN_BATCH));
+        let mut selected = std::collections::BTreeMap::new();
+        for entry in fs::read_dir(&self.root).map_err(|_| SpoolError::Io)? {
+            let entry = entry.map_err(|_| SpoolError::Io)?;
+            let name = entry.file_name();
+            if name
+                .to_str()
+                .is_some_and(|name| name.ends_with(".json") && name != "spool-state.json")
+            {
+                selected.insert(name, entry);
+                if selected.len() > limit.min(MAX_SCAN_BATCH) {
+                    selected.pop_last();
+                }
+            }
+        }
+        let entries = selected.into_values().collect::<Vec<_>>();
 
         entries
             .into_iter()
@@ -244,7 +247,7 @@ impl Spool {
                     file_name: file_name.clone(),
                 };
                 let parsed_name = parse_event_filename(&file_name);
-                let metadata = entry.metadata().map_err(|_| SpoolError::Io)?;
+                let metadata = fs::symlink_metadata(entry.path()).map_err(|_| SpoolError::Io)?;
                 let data = if !metadata.is_file() {
                     SpoolCandidateData::Rejected {
                         reason: SpoolRejectionReason::NotRegularFile,
@@ -264,7 +267,7 @@ impl Spool {
                         receive_sequence: parsed_name.map(|value| value.0),
                     }
                 } else {
-                    let bytes = fs::read(entry.path()).map_err(|_| SpoolError::Io)?;
+                    let bytes = read_bounded_record(&entry.path(), self.limits.max_event_bytes)?;
                     match serde_json::from_slice::<SpoolIngressRecord>(&bytes) {
                         Ok(record) if record.schema_version != INGRESS_SCHEMA_VERSION => {
                             SpoolCandidateData::Rejected {
@@ -312,14 +315,35 @@ impl Spool {
 
     pub fn read_state(&self) -> Result<SpoolState, SpoolError> {
         let path = self.root.join("spool-state.json");
-        if !path.exists() {
-            return Ok(SpoolState {
-                schema_version: 1,
-                ..SpoolState::default()
-            });
+        match fs::symlink_metadata(&path) {
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                return Ok(SpoolState {
+                    schema_version: 1,
+                    ..SpoolState::default()
+                })
+            }
+            Err(_) => return Err(SpoolError::Io),
+            Ok(metadata) if !metadata.is_file() => return Err(SpoolError::InvalidState),
+            Ok(_) => {}
         }
-        let bytes = fs::read(path).map_err(|_| SpoolError::Io)?;
-        serde_json::from_slice(&bytes).map_err(|_| SpoolError::Serialization)
+        let bytes = read_bounded_record(&path, 4096)?;
+        let value = mochi_privacy::parse_bounded_json(&bytes, 4096)
+            .map_err(|_| SpoolError::InvalidState)?;
+        let state: SpoolState =
+            serde_json::from_value(value).map_err(|_| SpoolError::Serialization)?;
+        if state.schema_version != 1
+            || state.evicted_count > i64::MAX as u64
+            || state.last_eviction_at.as_ref().is_some_and(|v| {
+                v.len() > 64
+                    || !v.ends_with('Z')
+                    || !v
+                        .bytes()
+                        .all(|c| c.is_ascii_digit() || b"-T:.Z".contains(&c))
+            })
+        {
+            return Err(SpoolError::InvalidState);
+        }
+        Ok(state)
     }
 
     fn make_record(
@@ -443,10 +467,7 @@ impl Spool {
             }
         }
         if evicted > 0 {
-            let mut state = self.read_state().unwrap_or(SpoolState {
-                schema_version: 1,
-                ..SpoolState::default()
-            });
+            let mut state = self.read_state()?;
             state.schema_version = 1;
             state.evicted_count = state.evicted_count.saturating_add(evicted);
             state.last_eviction_at = Some(received_at.to_owned());
@@ -547,4 +568,23 @@ fn write_private_atomic(
         return Err(SpoolError::Io);
     }
     Ok(())
+}
+
+fn read_bounded_record(path: &Path, limit: usize) -> Result<Vec<u8>, SpoolError> {
+    let mut options = OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    options.custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK);
+    let file = options.open(path).map_err(|_| SpoolError::Io)?;
+    if !file.metadata().map_err(|_| SpoolError::Io)?.is_file() {
+        return Err(SpoolError::InvalidState);
+    }
+    let mut bytes = Vec::new();
+    file.take(limit as u64 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| SpoolError::Io)?;
+    if bytes.len() > limit {
+        return Err(SpoolError::InvalidState);
+    }
+    Ok(bytes)
 }

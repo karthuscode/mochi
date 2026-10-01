@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "dev.mochi.desktop",
   "build": {
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "cargo build -p mochi-hook --locked && pnpm dev",
     "devUrl": "http://127.0.0.1:1420",
-    "beforeBuildCommand": "pnpm --dir ../.. build",
+    "beforeBuildCommand": "pnpm --dir ../.. build && cargo build -p mochi-hook --release --locked",
     "frontendDist": "../dist"
   },
   "app": {
@@ -30,6 +30,11 @@
     "active": true,
     "targets": ["app"],
     "icon": ["icons/icon.png", "icons/icon.icns"],
-    "macOS": { "minimumSystemVersion": "12.0" }
+    "macOS": {
+      "minimumSystemVersion": "12.0"
+    },
+    "resources": {
+      "../../../target/release/mochi-hook": "mochi-hook"
+    }
   }
 }

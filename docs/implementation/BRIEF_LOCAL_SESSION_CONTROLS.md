@@ -1,0 +1,11 @@
+# Internal MVP checkpoint — local capture controls
+
+Authorized in the 2026-10-01 MVP plan, following Briefs 09–12; this brings forward only the minimal controls/session display needed to test those native boundaries. Full Session Detail brief 18 and other product screens remain later.
+
+Provide least-privilege typed IPC for approved project registration, exact integration preview/application, local enable/pause/disconnect, bounded project/session/event lists, explicit finish and deletion. Project registration grants root scope only; a separate local-tracking choice approves both global capture and this project. Remote analysis remains off. “Pause all” revokes every approved project's capture; enabling one never inherits to other roots. Do not scan the prototype v1 spool; production uses a separate private spool and policy directory. No configuration mutation on startup.
+
+The core imports at most 100 candidates per tick and processes at most 25 episode sources, independently of React rendering. Reconcile persisted policies conservatively and mark uncertain live episodes interrupted after restart. One core per profile holds a native lock and owns the single SQLite writer. Git is collected only with current consent, outside hooks and UI rendering, one bounded snapshot per tick. Closing/quitting the MVP stops core processing; approved helper spooling can continue. This is not full V1 window/menu-bar lifecycle acceptance.
+
+UI: English, keyboard accessible form controls and status/errors; project alias/root preview, exact owned hook target/command, trust-review instructions, local capture state distinct from lesson state, session coverage/restart/pause/late warnings, event pagination and inert code text. No remote assets or model HTML. Unknown trust must never be rendered as ready. Delete requires explicit confirmation; local storage is private, unencrypted and not forensic-erasure protected.
+
+Tests: native project/root/consent/preview failure paths, startup/poll/finish/restart, exact native DTO validation, malformed IPC and action double-submit protection. Run all nine repository gates, build the packaged helper, and perform a real disposable CLI→Mochi session proof before claiming the capture checkpoint testable. Preserve unrelated concurrent brand work.

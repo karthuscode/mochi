@@ -1,3 +1,4 @@
+import { LocalCapture } from './LocalCapture';
 import { AppFrame } from '@mochi/ui';
 import { isTauri } from '@tauri-apps/api/core';
 import { useState } from 'react';
@@ -35,6 +36,7 @@ export function App() {
         <p>Desktop connection is available in the Tauri app.</p>
       )}
       <p role="status">{status}</p>
+      {isTauri() && <LocalCapture />}
     </AppFrame>
   );
 }

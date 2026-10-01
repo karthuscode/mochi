@@ -7,6 +7,7 @@ publish = false
 
 [dependencies]
 mochi-capture = { path = "../capture" }
+mochi-learning = { path = "../learning" }
 mochi-domain = { path = "../domain" }
 mochi-privacy = { path = "../privacy" }
 rusqlite = { version = "=0.40.2", features = ["bundled"] }

@@ -337,3 +337,34 @@ fn two_prepared_installations_cannot_overwrite_each_other() {
         Err(InstallError::ConcurrentEdit)
     );
 }
+
+#[test]
+fn authorized_install_is_literal_idempotent_and_preserves_owned_upgrade() {
+    let f = fixture();
+    install(&f);
+    let policies = f.root.join("policies with spaces");
+    fs::create_dir(&policies).unwrap();
+    let plan = f
+        .installer
+        .prepare_authorized_install(f.request.clone(), &policies)
+        .unwrap();
+    assert!(crate::hooks::valid_capture_command(
+        &plan.preview().owned_command,
+        &f.request.helper_path
+    ));
+    assert!(plan
+        .preview()
+        .owned_command
+        .contains(" capture-authorized "));
+    let id = plan.preview().plan_id;
+    f.installer.apply(plan, id).unwrap();
+    let again = f
+        .installer
+        .prepare_authorized_install(f.request.clone(), &policies)
+        .unwrap();
+    assert!(!again.preview().changes_configuration);
+    let remove = f.installer.prepare_disconnect(&f.project).unwrap();
+    let id = remove.preview().plan_id;
+    f.installer.apply(remove, id).unwrap();
+    assert!(!config(&f).exists());
+}

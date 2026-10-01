@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "reconstruction": {
+    "overview": [
+      {
+        "text": "The captured code updates an accumulator in a loop.",
+        "confidence": "observed",
+        "references": ["code:after:fixture"]
+      }
+    ],
+    "built": [
+      {
+        "text": "The captured code updates an accumulator in a loop.",
+        "confidence": "observed",
+        "references": ["code:after:fixture"]
+      }
+    ],
+    "changed": [
+      {
+        "text": "The captured code updates an accumulator in a loop.",
+        "confidence": "observed",
+        "references": ["code:after:fixture"]
+      }
+    ],
+    "decisions": [
+      {
+        "text": "A reliable test result was not observed.",
+        "confidence": "unknown",
+        "references": []
+      }
+    ],
+    "failures": [
+      {
+        "text": "A reliable test result was not observed.",
+        "confidence": "unknown",
+        "references": []
+      }
+    ],
+    "unresolved": [
+      {
+        "text": "A reliable test result was not observed.",
+        "confidence": "unknown",
+        "references": []
+      }
+    ]
+  },
+  "concepts": [
+    {
+      "key": "algorithms.accumulation",
+      "title": "Accumulating values",
+      "definition": "An accumulator stores a running result while a loop visits the input. For addition, its initial value is zero because adding zero leaves every later value unchanged. Each iteration combines the existing result with one more value, and the return happens after all inputs have been visited.",
+      "whyItWorks": "In the observed snapshot, the result variable is initialized before the loop. The update therefore builds on the previous iteration rather than replacing the whole history. You can trace a short list on paper: zero becomes the first value, then the sum of the first two, and eventually the total. This explanation describes the captured code, without assuming any missing test passed.",
+      "whyItMatters": "The same pattern appears in counts, totals and reductions. Thinking about the identity value helps you handle an empty collection deliberately and choose the right starting point for a different operation. It also makes the effect of moving initialization into the loop easier to predict.",
+      "misconception": "A common mistake is resetting the result within every iteration. That loses earlier contributions, so the final value represents only the last input rather than the collection.",
+      "relevance": 0.9,
+      "importance": 0.9,
+      "impact": 0.9,
+      "references": ["code:after:fixture"],
+      "codeReference": "code:after:fixture",
+      "codeQuote": "result += value",
+      "question": {
+        "kind": "explain_why",
+        "prompt": "Why does the result start at zero before the loop?",
+        "choices": [],
+        "correctChoice": null,
+        "snippet": null,
+        "assumptions": null,
+        "expected": null,
+        "criteria": [
+          "Identifies zero as the neutral element for addition.",
+          "Explains the accumulator persists across iterations."
+        ],
+        "blockingMisconceptions": [
+          "The variable resets inside every loop iteration."
+        ],
+        "explanation": "Zero is the neutral element for addition, and the same accumulator receives each value once."
+      },
+      "delayedVariant": {
+        "kind": "explain_why",
+        "prompt": "What would change if the accumulator started at one instead?",
+        "choices": [],
+        "correctChoice": null,
+        "snippet": null,
+        "assumptions": null,
+        "expected": null,
+        "criteria": [
+          "Identifies zero as the neutral element for addition.",
+          "Explains the accumulator persists across iterations."
+        ],
+        "blockingMisconceptions": [
+          "The variable resets inside every loop iteration."
+        ],
+        "explanation": "Zero is the neutral element for addition, and the same accumulator receives each value once."
+      }
+    }
+  ]
+}

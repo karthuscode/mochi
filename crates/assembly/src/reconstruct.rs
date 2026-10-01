@@ -49,11 +49,35 @@ pub fn assemble_session(
     evidence: &[PersistedIngress],
     explicit_git_context: Option<&domain::GitContext>,
 ) -> AssemblyResult<domain::CodingSession> {
+    build_episode(
+        source,
+        evidence,
+        explicit_git_context,
+        session_id_for_source(source),
+        false,
+    )
+}
+
+pub fn assemble_episode(
+    source: &AssemblySourceKey,
+    evidence: &[PersistedIngress],
+    explicit_git_context: Option<&domain::GitContext>,
+    session_id: domain::SessionId,
+) -> AssemblyResult<domain::CodingSession> {
+    build_episode(source, evidence, explicit_git_context, session_id, true)
+}
+
+fn build_episode(
+    source: &AssemblySourceKey,
+    evidence: &[PersistedIngress],
+    explicit_git_context: Option<&domain::GitContext>,
+    session_id: domain::SessionId,
+    allow_ambiguous_stop: bool,
+) -> AssemblyResult<domain::CodingSession> {
     if evidence.is_empty() {
         return Err(AssemblyError::InvalidEvidenceRelationship);
     }
     validate_evidence_group(source, evidence)?;
-    let session_id = session_id_for_source(source);
     let turn_plan = build_turn_plan(session_id, evidence)?;
     let events = build_events(source, session_id, evidence, &turn_plan)?;
     let turns = build_turns(session_id, evidence, &events, &turn_plan)?;
@@ -69,7 +93,7 @@ pub fn assemble_session(
         .map_err(|_| AssemblyError::InvalidEvidenceRelationship)?;
     let file_changes = derive_git_file_changes(session_id, &git_context);
     let capabilities = capture_capabilities(source, evidence, &git_context)?;
-    let (status, ended_at, end_known) = session_lifecycle(evidence)?;
+    let (status, ended_at, end_known) = session_lifecycle(evidence, allow_ambiguous_stop)?;
     let started_at = evidence
         .iter()
         .find(|item| {
@@ -570,6 +594,7 @@ fn interrupted_turns(
 
 fn session_lifecycle(
     evidence: &[PersistedIngress],
+    allow_ambiguous: bool,
 ) -> AssemblyResult<(domain::SessionStatus, Option<domain::UtcTimestamp>, bool)> {
     let stops = evidence
         .iter()
@@ -579,7 +604,10 @@ fn session_lifecycle(
         })
         .collect::<Vec<_>>();
     if stops.len() > 1 {
-        return Err(AssemblyError::AmbiguousAssociation);
+        if !allow_ambiguous {
+            return Err(AssemblyError::AmbiguousAssociation);
+        }
+        return Ok((domain::SessionStatus::Incomplete, None, false));
     }
     let Some((item, stop)) = stops.first().copied() else {
         return Ok((domain::SessionStatus::Incomplete, None, false));
@@ -630,7 +658,9 @@ fn capture_capabilities(
         fallback_capabilities(source.client_surface)
     };
     capabilities.git_context = match git {
-        domain::GitContext::Available { .. } => domain::CapabilitySupport::Supported,
+        domain::GitContext::Available { .. } | domain::GitContext::FinalOnly { .. } => {
+            domain::CapabilitySupport::Supported
+        }
         domain::GitContext::Unavailable {
             reason: domain::GitUnavailableReason::NotRepository,
         } => domain::CapabilitySupport::Unsupported,
@@ -748,7 +778,8 @@ fn capture_completeness(
         },
         git: match git {
             domain::GitContext::Available { before, after } => {
-                if before.truncated
+                if !before.warnings.is_empty()
+                    || before.truncated
                     || after.as_ref().is_none_or(|value| value.truncated)
                     || after.is_none()
                     || after.as_ref().is_some_and(|value| {
@@ -760,6 +791,7 @@ fn capture_completeness(
                     domain::EvidenceCompleteness::Complete
                 }
             }
+            domain::GitContext::FinalOnly { .. } => domain::EvidenceCompleteness::Partial,
             domain::GitContext::Unavailable {
                 reason: domain::GitUnavailableReason::NotRepository,
             } => domain::EvidenceCompleteness::NotApplicable,

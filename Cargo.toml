@@ -8,5 +8,7 @@ members = [
   "crates/assembly",
   "crates/privacy",
   "crates/integration",
+  "crates/bridge",
+  "crates/learning",
 ]
 resolver = "2"

@@ -1,3 +1,7 @@
+mod learning;
+pub use learning::{AnalysisRun, LearningAttempt, LearningQuestion};
+mod episode;
+pub use episode::{CaptureEpisode, EpisodeState};
 mod assembly;
 mod connection;
 mod error;
