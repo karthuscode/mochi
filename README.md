@@ -1,10 +1,52 @@
-# Mochi
+<p align="center">
+  <img src="docs/design/assets/mochi/final/character-idle.png" width="130" alt="mochi’s orange and graphite robot companion" />
+</p>
 
-**Use AI to build. Use Mochi to understand.**
+<h1 align="center">mochi</h1>
 
-Mochi is a local-first desktop learning companion for developers who build with AI and want to understand what they built. V1 is planned to turn approved Codex sessions and Git evidence into focused lessons, practice and later review.
+<p align="center"><strong>Build with AI. Understand what you built.</strong></p>
+<p align="center">A local-first desktop learning companion for your own coding work.</p>
+<p align="center">macOS Apple Silicon · Codex CLI · Personal MVP preview</p>
 
-**Current status: personal Codex CLI learning MVP implementation.** The desktop now has explicit project approval/connection, consent-controlled continuous capture, session history and revisioned assembly, filtered Git context, an exact analysis-send preview, macOS Keychain BYOK, and persisted explanations/self-checks. Remote analysis defaults off each run. The [trial guide and limitations](docs/implementation/INTERNAL_CLI_MVP.md) explain how to test it; [execution evidence](docs/implementation/MVP_IMPLEMENTATION.md) distinguishes automated/native verification from the complete live CLI/BYOK and model-quality gates still required. CLI 0.151.0 is the verified installation baseline; Desktop remains partial. This is an internal test build, before mini challenges, knowledge/review and external distribution.
+## A little more understanding
+
+mochi helps you look back at the work you build with Codex: capture an approved project locally, explore the observed changes, then choose whether to turn that evidence into an explanation and a short self-check.
+
+Your sessions stay on your Mac. Remote analysis starts off, uses your own OpenAI API key in macOS Keychain, and requires approval of the exact request. No mochi account, cloud sync or telemetry service.
+
+## Showcase
+
+| Light                                                                                    | Dark                                                                                   |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| ![mochi — light desktop interface](docs/implementation/assets/ui-finalization-light.png) | ![mochi — dark desktop interface](docs/implementation/assets/ui-finalization-dark.png) |
+
+Native screenshots of the empty first-run interface. The Signal robot, app icon and understated glass surfaces are bundled locally; the optional floating character is currently a static trial.
+
+## What works today
+
+- **Connect deliberately.** Approve a project folder, review the exact Codex hook changes, then enable or pause local capture.
+- **Look back locally.** Browse sessions, captured activity and filtered Git context, with missing evidence and uncertain attribution kept visible.
+- **Choose what leaves your Mac.** Inspect a sanitized request before optional OpenAI analysis; storing a key never grants send permission.
+- **Learn from your work.** Evidence-linked explanations focus on up to three concepts. Self-check answers and feedback are saved locally.
+- **Make it yours.** Separate Sessions and Settings views, light/dark/system appearance, and explicit static-companion show/hide controls.
+
+## Try the preview
+
+Build from source on an Apple Silicon Mac using the prerequisites below:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm desktop:build
+open target/release/bundle/macos/mochi.app
+```
+
+Start with a disposable project and follow the [personal trial guide](docs/implementation/INTERNAL_CLI_MVP.md). Capture/history do not require an API key. New explanations require your own OpenAI API key and separately billed API usage.
+
+**This is an engineering preview, not a finished V1 release.** Codex CLI **0.151.0** is the verified installation baseline; Desktop capture remains partial. The complete new live CLI → OpenAI → learning trial and human model-quality review are still pending. Mini challenges, knowledge tracking, spaced review, companion animation and distribution signing/notarization are future work. Local storage relies on account permissions rather than application-level encryption.
+
+The checkpoint passed **144 Rust tests and 43 frontend tests**, plus all nine repository gates on macOS Apple Silicon. See [validation evidence](docs/implementation/UI_FINALIZATION.md) for the tested boundaries, intermittent helper-fixture timing and remaining native gates.
+
+Built with **Tauri 2, React, TypeScript, Rust and bundled SQLite**. [Roadmap](docs/implementation/V1_ROADMAP.md) · [Architecture](docs/architecture/ARCHITECTURE.md) · [Privacy](docs/security/PRIVACY_SECURITY.md)
 
 ## Development
 
@@ -17,7 +59,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-The development app displays **Mochi / V1 development build**. Activate **Check desktop connection** to verify the Rust IPC response. Quit the app or press Ctrl+C in the terminal to end development. Port 1420 must be available. `pnpm dev:web` starts the browser preview without native IPC; this is a development aid for the desktop frontend.
+The development app opens the **Sessions** view. Open **Settings → About this preview → Check desktop connection** to verify the Rust IPC response. Quit the app or press Ctrl+C in the terminal to end development. Port 1420 must be available. `pnpm dev:web` starts the browser preview without native IPC; this is a development aid for the desktop frontend.
 
 | Command                             | Purpose                                                                |
 | ----------------------------------- | ---------------------------------------------------------------------- |
@@ -144,4 +186,4 @@ For an isolated native visual preview, run `MOCHI_COMPANION_PREVIEW=1 pnpm deskt
 
 Technical identifiers and documents use English; initial product UI is English. Localization is deferred. Each specialized spec names its authority. Keep shared terms, limits, statuses, consent, and brief dependencies aligned. Record changes in [DECISIONS.md](docs/product/DECISIONS.md), update affected documents in the same change, and run the documentation checks in [VALIDATION_PLAN.md](docs/implementation/VALIDATION_PLAN.md).
 
-The source product discussion was **Projekt tervezése**, conversation `6aa66c66-9dbc-83eb-a890-2616cc3eb048`. Later desktop/Codex-only decisions supersede earlier website, multi-provider, and percentage-based knowledge sketches. Concrete defaults added to make this pack implementable are explicitly distinguished in the decision register.
+Desktop/Codex-only decisions supersede earlier website, multi-provider and percentage-based knowledge sketches. Concrete defaults added to make this pack implementable are distinguished in the decision register.
