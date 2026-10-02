@@ -57,7 +57,7 @@ export function LearningSettings() {
       <h2 id="analysis-settings-title">Learning settings</h2>
       <p>
         OpenAI API usage is billed separately from ChatGPT. Your API key stays
-        in macOS Keychain; Mochi never reads your Codex credentials.
+        in macOS Keychain; mochi never reads your Codex credentials.
       </p>
       <p role="status">{status?.message}</p>
       {error && <p role="alert">{error}</p>}
@@ -110,7 +110,7 @@ export function LearningSettings() {
       </label>
       <p>
         Model: {status?.model ?? 'gpt-4o-mini-2024-07-18'}. No content is sent
-        by opening Mochi, storing a key or enabling this control. Remote
+        by opening mochi, storing a key or enabling this control. Remote
         permission resets to off on restart. Requests use OpenAI with storage
         disabled; provider retention policies still apply.
       </p>
@@ -462,7 +462,7 @@ function SelfCheck({
       <p>{question.prompt}</p>
       {question.snippet && (
         <>
-          <p>Practice example; this code is never executed by Mochi.</p>
+          <p>Practice example; this code is never executed by mochi.</p>
           <pre>{question.snippet}</pre>
           <p>{question.assumptions}</p>
         </>

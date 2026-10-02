@@ -5,6 +5,8 @@
   "windows": ["main"],
   "permissions": [
     "allow-get-app-info",
+    "allow-get-companion-trial",
+    "allow-set-companion-visible",
     "allow-local-status",
     "allow-list-projects",
     "allow-approve-project",

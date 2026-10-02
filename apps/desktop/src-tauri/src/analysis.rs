@@ -138,7 +138,7 @@ impl AnalysisService {
                 epoch: 1,
                 pending: BTreeMap::new(),
                 job: None,
-                message: "Remote analysis is off. No content has been sent.".into(),
+                message: "Remote analysis is off for this app run.".into(),
             }),
             credentials,
             provider,

@@ -142,7 +142,7 @@ impl LocalCapture {
                 .map_err(|_| "Local profile permissions unavailable.")?;
         }
         FileExt::try_lock_exclusive(&lock)
-            .map_err(|_| "Mochi is already processing this local profile.")?;
+            .map_err(|_| "mochi is already processing this local profile.")?;
         let store = SqliteStore::open_system(data.join("mochi.sqlite3"))
             .map_err(|_| "Local storage could not be opened safely.")?;
         let policy_root = data.join("capture-policy");

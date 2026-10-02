@@ -4,9 +4,21 @@ Baseline: 1.0. Authority: navigation, screens, visible states, accessibility and
 
 ## Design direction
 
-Mochi is a calm, friendly small robot companion. It helps the user understand their work without guilt, forced streaks, skill-score theater or interrupting the coding tool. Use restrained robot artwork, clear typography, generous reading space and code legibility. Brand assets can be designed later; no generated mascot asset is needed to implement V1 logic.
+Mochi is a calm, friendly small robot companion. It helps the user understand their work without guilt, forced streaks, skill-score theater or interrupting the coding tool. Use restrained robot artwork, clear typography, generous reading space and code legibility. The user selected the orange/graphite **Signal** robot; final logo, icon and static character assets are tracked in [Mochi identity](MOCHI_IDENTITY.md). The first cream/mint round was rejected. The logo and app icon use a flat simplified helmet; the character uses graphic 2.5D rendering. These assets do not imply learning or companion runtime is implemented.
 
 English is the initial UI language. Follow system light/dark preference with optional override. Colors communicate status alongside text/icon; no color-only information. Keep technical protocol details in expandable diagnostics, while coverage/privacy explanations remain visible in plain language.
+
+## Personal CLI preview — implemented 2026-10-02
+
+The current internal Briefs 09–21 milestone implements Sessions and Settings only; the full route table below remains the V1 target. Sessions contains project approval/connection, bounded local evidence, exact analysis preview and explanation/self-check. Settings contains Keychain, run-local remote permission, static companion controls and a window-local appearance choice. Switching to Settings keeps session drafts and previews mounted. Provider approval and expiry remain native-validated; navigation grants no consent.
+
+Use lowercase `mochi` in application-owned branding, text and window titles. Pair the selected Signal face mark with lowercase live lettering; earlier capitalized wordmark exports remain historical identity sources. The app bundle is now `mochi.app`. Technical identifiers and legacy build-info DTO remain compatible.
+
+Glassmorphism uses lightly translucent, bordered surfaces over a local graphite/paper canvas, static coral highlights and system typography. It does not require desktop-background access, remote assets, fonts or a new native permission. Light/dark/system appearance resets with the window; reduced transparency has opaque surfaces, reduced motion has no animation, and keyboard focus is explicit. No fabricated statistics, mastery badges or unavailable future routes.
+
+Browser rendering is an explicitly labelled appearance preview. Native project/analysis/companion actions are unavailable and no IPC calls or synthetic sessions are loaded. Native rendering shows actual storage/loading/errors. First-run root approval, connection consent and remote send consent start unchecked. Storage failures do not masquerade as a new empty library. Project switches clear the previous session page and connection preview immediately; deletion confirmation receives focus and explains its limits.
+
+See [bounded brief](../implementation/BRIEF_MVP_UI_FINALIZATION.md) and [validation evidence](../implementation/UI_FINALIZATION.md). Full accessibility/release acceptance below is not implied by this internal polish.
 
 ## Navigation and routes
 
@@ -89,6 +101,10 @@ Key fields are write-only masked entry; existing keys cannot be revealed by fron
 Use separate capture and lesson status badges; “session ready” alone is ambiguous. No success notification for insufficient context. Loading skeletons must not suggest nonexistent data. All empty/error states keep navigation/settings accessible.
 
 ## Native behavior
+
+An optional floating desktop companion is a separately assigned visual/native extension. It stays at its dragged position, floats/blinks gently and reacts once to pointer entry with wave, squash-and-spring or smiling head tilt in rotating order. Click opens the existing main window. It is off initially, stays above ordinary windows, is hidden in fullscreen workspaces and honors reduced motion. The transparent Tauri feasibility and animation/lifecycle briefs must pass before this behavior is claimed implemented; see [Brand execution](../implementation/MOCHI_BRAND_IDENTITY.md). This does not complete background, menu-bar or notification roadmap acceptance.
+
+The current [static trial](../implementation/COMPANION_STATIC_TRIAL.md) supplies a 160-point transparent companion window and main-window Show/Hide desktop Mochi controls. Its character is static, initially hidden in normal startup, and its position is retained only during the current run. Dragging suppresses click-open; deliberate click shows, restores and focuses the existing main window. The isolated developer preview loads a synthetic main page and skips capture/database/analysis startup. Closing preview main hides it; closing normal main still exits. Saved settings, motion and persistent background/menu-bar behavior are not part of this trial.
 
 Menu bar shows disabled/paused/active/idle state, safe project alias, elapsed observed duration and pending lesson/review count. Actions: Open Mochi, current session, pause/resume, Finish episode, Settings, Quit. Closing window leaves core running. Quit text explains installed helper may still spool approved sessions; disabling tracking stops collection.
 

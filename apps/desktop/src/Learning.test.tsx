@@ -1,8 +1,18 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LearningPanel, LearningSettings } from './Learning';
+import { App } from './App';
+import { localCapture } from './native/local-capture';
 import { learning } from './native/learning';
 import type { Lesson, SendPreview, Attempt } from './native/learning';
+vi.mock('./native/local-capture', () => ({
+  localCapture: {
+    projects: vi.fn(),
+    status: vi.fn(),
+    sessions: vi.fn(),
+    detail: vi.fn(),
+  },
+}));
 vi.mock('./native/learning', () => ({
   learning: {
     status: vi.fn(),
@@ -123,6 +133,84 @@ beforeEach(() => {
   vi.mocked(learning.send).mockResolvedValue();
 });
 describe('internal learning controls', () => {
+  it('preserves a self-check draft and exact send preview when visiting settings', async () => {
+    vi.stubGlobal('isTauri', true);
+    const session = {
+      id,
+      startedAt: '2026-10-02T12:00:00Z',
+      endedAt: '2026-10-02T12:10:00Z',
+      captureState: 'finalized',
+      coverage: 'partial',
+      revision: 2,
+      paused: false,
+      restarted: false,
+      lateEvidence: false,
+      continuationOf: null,
+    };
+    vi.mocked(localCapture.projects).mockResolvedValue([
+      {
+        id,
+        name: 'Synthetic project',
+        root: '/synthetic/project',
+        tracking: false,
+        policyRevision: 1,
+      },
+    ]);
+    vi.mocked(localCapture.status).mockResolvedValue({
+      schemaVersion: 1,
+      message: 'Local capture ready.',
+      spoolEvictionCount: 0,
+      remoteAnalysisEnabled: false,
+    });
+    vi.mocked(localCapture.sessions).mockResolvedValue({
+      items: [session],
+      next: null,
+    });
+    vi.mocked(localCapture.detail).mockResolvedValue({
+      session,
+      events: [],
+      nextSequence: null,
+      eventCount: 0,
+      code: [],
+      gitNotice: 'Git unavailable.',
+    });
+    render(<App />);
+    await screen.findByRole('option', { name: 'Synthetic project' });
+    fireEvent.change(screen.getByLabelText('Project', { exact: true }), {
+      target: { value: id },
+    });
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: /finalized · partial coverage/,
+      }),
+    );
+    fireEvent.click(await screen.findByRole('radio', { name: 'Zero' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Preview explanation request' }),
+    );
+    await screen.findByRole('heading', {
+      name: 'Review exactly what will be sent',
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(
+      screen.queryByRole('radio', { name: 'Zero' }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sessions' }));
+    expect(screen.getByRole('radio', { name: 'Zero' })).toBeChecked();
+    expect(
+      screen.getByRole('heading', { name: 'Review exactly what will be sent' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: 'Send approved request' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Finish session' }),
+    ).toBeDisabled();
+    expect(learning.submit).not.toHaveBeenCalled();
+    expect(learning.send).not.toHaveBeenCalled();
+    expect(learning.permission).not.toHaveBeenCalled();
+  });
+
   it('never sends on mount or preview, and requires the exact send checkbox', async () => {
     render(<LearningPanel sessionId={id} finalized />);
     await screen.findByRole('heading', { name: 'Learn from this work' });

@@ -13,7 +13,7 @@ crate-type = ["lib"]
 tauri-build = { version = "=2.6.3", features = [] }
 
 [dependencies]
-tauri = { version = "=2.11.5", features = [] }
+tauri = { version = "=2.11.5", features = ["macos-private-api"] }
 serde = { version = "=1.0.229", features = ["derive"] }
 mochi-persistence = { path = "../../../crates/persistence" }
 mochi-domain = { path = "../../../crates/domain" }
@@ -32,6 +32,8 @@ reqwest = { version = "=0.13.5", default-features = false, features = ["rustls"]
 tokio = { version = "=1.53.1", features = ["rt", "time", "net", "macros"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "=0.6.4"
+objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std", "NSWindow"] }
 core-foundation = "=0.10.1"
 
 [dev-dependencies]

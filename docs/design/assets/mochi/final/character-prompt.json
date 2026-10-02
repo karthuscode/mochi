@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-01",
+  "generator": "built-in image_gen",
+  "transparentBackground": true,
+  "reference": "../concepts/round-02/a-signal.png",
+  "output": "character-idle.png",
+  "prompt": "Use case: identity-preserve.\nAsset type: production transparent desktop mascot for Mochi.\nInput image: the selected Signal robot concept sheet. The LEFT orange-and-graphite robot is the edit target/reference; the icon on the right must be removed.\nCreate a single clean full-body isolated version of EXACTLY this original Signal robot, keeping its distinct orange asymmetric softly angular helmet with its single cut notch on the upper viewer-right, two vertical charcoal dash eyes directly on the orange face (NO screen), small graphite torso with a small white chest indicator, orange mitten hands and orange softly angular boots. Keep the original relative proportions, coral-orange #FF7048 and ink-graphite #171B24 materials, graphic 2.5D cel-shaded rendering and restrained highlights. The eyes and notch placement must match the source character. This is a clever developer companion, not a glossy toy.\nChange only pose and cleanup: centered upright front-facing relaxed IDLE pose, both arms lowered slightly out from its sides, both feet clearly visible and level, tiny gap between boots. Keep hands visibly separate and usable for future waving. Head level, no exaggerated tilt. Single character only, no icon, no duplicates, no lettering. Genuinely transparent background with clean antialiased alpha edges; no surrounding white fringe, matte rectangle, broad glow, shadow, floor, particles or decorative objects. Generous equal clear margins around entire silhouette, no cropping, high-resolution approximately square canvas. Preserve character identity instead of redesigning it."
+}

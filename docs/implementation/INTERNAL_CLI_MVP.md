@@ -48,7 +48,7 @@ SQLite/spool/config recovery are protected by filesystem permissions, not applic
 
 ## Reproduce the personal trial
 
-1. Build with `pnpm desktop:build`, then open `target/release/bundle/macos/Mochi.app`.
+1. Build with `pnpm desktop:build`, then open `target/release/bundle/macos/mochi.app`.
 2. Start with a disposable synthetic project. Enter its canonical root and a non-sensitive alias; approve the root. Review Connect's exact project hook change and enable local tracking explicitly.
 3. In normal Codex CLI 0.151.0, review each Mochi handler using `/hooks`. Do not trust unrelated handlers merely because they appear beside Mochi.
 4. Perform a small normal coding task with tests. Return to Mochi, inspect captured events/coverage and Git warnings, then Finish the episode if needed. Quit/reopen and verify no duplicate sessions.
@@ -65,3 +65,5 @@ Automated verification covers authorization/revocation, strict ingress and secre
 The Brief 08 real CLI install/trust/task/disconnect gate is recorded in [installer evidence](CODEX_INTEGRATION_INSTALLER.md). Process tests exercise the new authorized helper; native learning-flow tests use injected provider responses. These are useful implementation evidence, not a substitute for the new complete live CLI/BYOK trial, model semantic-quality evaluation, clean-machine installation, signing/notarization, sleep/wake or long-session performance audits. Final repository-gate and native GUI evidence is recorded in [the execution record](MVP_IMPLEMENTATION.md).
 
 Official adapter references: [Responses migration](https://developers.openai.com/api/docs/guides/migrate-to-responses), [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [model](https://developers.openai.com/api/docs/models/gpt-4o-mini), [provider data controls](https://developers.openai.com/api/docs/guides/your-data), [reqwest](https://docs.rs/reqwest/0.13.5/reqwest/).
+
+The 2026-10-02 [interface finalization](UI_FINALIZATION.md) adds the selected Signal artwork, lowercase application branding and separate Sessions/Settings navigation. This presentation checkpoint does not change the live-trial or release gates above.

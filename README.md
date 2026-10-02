@@ -70,7 +70,7 @@ The legacy developer helper spool is `~/Library/Application Support/dev.mochi.de
 
 Focused commands: `pnpm test:frontend`, `pnpm test:rust`, `pnpm lint:frontend`, `pnpm lint:rust`. Rust checks require the native prerequisites; run `pnpm build` before direct release-mode Cargo commands so embedded frontend assets exist. Normal `desktop:build` handles this automatically.
 
-Local output: `apps/desktop/dist/`, `target/debug/mochi-desktop`, and `target/release/bundle/macos/Mochi.app`. These are ignored. The local app bundle is not a signed/notarized distribution release. CI checks frontend tooling on Ubuntu and native compilation, tests and `.app` building on macOS; it does not prove integration or clean-machine installation.
+Local output: `apps/desktop/dist/`, `target/debug/mochi-desktop`, and `target/release/bundle/macos/mochi.app`. These are ignored. The local app bundle is not a signed/notarized distribution release. CI checks frontend tooling on Ubuntu and native compilation, tests and `.app` building on macOS; it does not prove integration or clean-machine installation.
 
 ## Repository layout and ownership
 
@@ -128,12 +128,19 @@ Rust owns native integration, privacy, persistence and deterministic learning be
 | [Brief template](docs/implementation/BRIEF_TEMPLATE.md)           | Contract for individual implementation tasks                 |
 | [Validation plan](docs/implementation/VALIDATION_PLAN.md)         | Release acceptance and meaningful verification               |
 
+## Personal preview interface
+
+The personal CLI checkpoint now has a glassmorphism Sessions/Settings shell using the selected Signal mark, static character and app icon. Application branding is lowercase `mochi`. Settings includes a window-local System/Light/Dark appearance choice, Keychain/remote controls and the optional static companion. Navigation preserves session drafts; browser rendering is a labelled appearance preview with native actions disabled. See [interface finalization](docs/implementation/UI_FINALIZATION.md) for checks and remaining gates.
+
 ## Next task
 
 Complete the personal synthetic CLI/BYOK trial in [the MVP guide](docs/implementation/INTERNAL_CLI_MVP.md), including human model-quality review. The next product implementation is Brief 22 (text-only mini challenge), followed by the existing knowledge/review sequence. The current checkpoint does not satisfy full V1 ready-lesson or distribution acceptance. Do not implement further roadmap work without an explicit task.
 
 ## Documentation maintenance
 
+The user selected the orange/graphite **Signal** robot. [Mochi identity](docs/design/MOCHI_IDENTITY.md) includes the final logo, macOS icon, monochrome menu-bar mark and static character; the app now uses the Signal icon. [Brand brief evidence](docs/implementation/MOCHI_BRAND_IDENTITY.md) tracks validation. [Companion 01](docs/implementation/COMPANION_STATIC_TRIAL.md) adds the separate static floating-window trial with explicit show/hide controls. Animation, saved preferences and background/menu-bar lifecycle remain a subsequent brief, independent of the CLI MVP.
+
+For an isolated native visual preview, run `MOCHI_COMPANION_PREVIEW=1 pnpm desktop:dev`, or after `pnpm desktop:build`, run `MOCHI_COMPANION_PREVIEW=1 target/release/bundle/macos/mochi.app/Contents/MacOS/mochi-desktop`. This mode loads a synthetic preview directly and skips capture/database/analysis startup. Drag the character; click it to reopen the preview window. Close hides the preview window; Command-Q quits the trial. Normal app startup keeps the companion hidden, and closing the normal main window still exits the app.
 
 Technical identifiers and documents use English; initial product UI is English. Localization is deferred. Each specialized spec names its authority. Keep shared terms, limits, statuses, consent, and brief dependencies aligned. Record changes in [DECISIONS.md](docs/product/DECISIONS.md), update affected documents in the same change, and run the documentation checks in [VALIDATION_PLAN.md](docs/implementation/VALIDATION_PLAN.md).
 

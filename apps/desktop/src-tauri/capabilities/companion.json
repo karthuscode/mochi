@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "companion",
+  "description": "The local static companion can drag itself, hide itself and open the existing Mochi window. It cannot read sessions, credentials or project data.",
+  "windows": ["companion"],
+  "permissions": [
+    "allow-open-mochi",
+    "allow-hide-companion",
+    "allow-start-companion-drag"
+  ]
+}

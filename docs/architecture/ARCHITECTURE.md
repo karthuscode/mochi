@@ -115,3 +115,7 @@ Use narrowly named commands for list/read session, finalize, consent/config chan
 ## Internal CLI MVP amendment — 2026-10-01
 
 Additive migrations 0004/0005 implement durable capture episodes and internal learning publication/attempt ownership. Session parent identity survives revisions so old attempted questions remain immutable; changed input/policy makes old analysis stale. Initial/delayed questions and exposure records publish atomically with the explanation, but no mini challenge or knowledge/review reducer exists yet. The current explanation has no full ready-lesson status. Git final-only context is explicit when no baseline was captured. See [implementation/trial evidence](../implementation/INTERNAL_CLI_MVP.md) for resource limits, privacy omissions, provider behavior and unaccepted live gates.
+
+## Personal MVP interface checkpoint — 2026-10-02
+
+React now presents persistent Sessions content and a separate Settings view, with selected local Signal assets and window-local appearance state. Navigation does not remount the selected session/self-check or broaden IPC authority. Browser rendering explicitly disables native actions and skips all project/status polling; it neither inserts fixtures nor imitates a native capture runtime. Lowercase display branding and the `mochi.app` bundle name preserve existing technical IDs and versioned DTOs. No migration, dependency, consent, network or capture contract changes. See [UI validation](../implementation/UI_FINALIZATION.md).

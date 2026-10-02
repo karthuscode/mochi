@@ -1,4 +1,4 @@
-import { LearningPanel, LearningSettings } from './Learning';
+import { LearningPanel } from './Learning';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { localCapture } from './native/local-capture';
 import type {
@@ -8,9 +8,14 @@ import type {
   SessionList,
 } from './native/local-capture';
 
-export function LocalCapture() {
+import character from '../../../docs/design/assets/mochi/final/character-idle.png';
+
+export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
+  const deletePrompt = useRef<HTMLElement>(null);
+  const approval = useRef<HTMLDetailsElement>(null);
   const browsingOlder = useRef(false);
   const busyNow = useRef(false);
+  const [loaded, setLoaded] = useState(!enabled);
   const [projects, setProjects] = useState<ProjectView[]>([]);
   const [projectId, setProjectId] = useState('');
   const [path, setPath] = useState('');
@@ -27,10 +32,14 @@ export function LocalCapture() {
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const [deleting, setDeleting] = useState<'project' | 'session' | null>(null);
+  useEffect(() => {
+    if (deleting) deletePrompt.current?.focus();
+  }, [deleting]);
   const project = projects.find((p) => p.id === projectId);
   const refresh = useCallback(async () => {
     const rows = await localCapture.projects();
     setProjects(rows);
+    setLoaded(true);
     const state = await localCapture.status();
     setStatus(
       state.spoolEvictionCount > 0
@@ -39,12 +48,13 @@ export function LocalCapture() {
     );
   }, []);
   useEffect(() => {
+    if (!enabled) return;
     let live = true;
     const timer = setTimeout(() => {
       void refresh().catch(() => {
         if (live)
           setError(
-            'Local storage is unavailable. Restart Mochi and check its permissions.',
+            'Local storage is unavailable. Restart mochi and check its permissions.',
           );
       });
     }, 0);
@@ -52,9 +62,9 @@ export function LocalCapture() {
       live = false;
       clearTimeout(timer);
     };
-  }, [refresh]);
+  }, [enabled, refresh]);
   useEffect(() => {
-    if (!projectId) return;
+    if (!enabled || !projectId) return;
     let live = true;
     const update = async () => {
       try {
@@ -77,9 +87,9 @@ export function LocalCapture() {
       live = false;
       clearInterval(timer);
     };
-  }, [projectId, refresh]);
+  }, [enabled, projectId, refresh]);
   async function action(run: () => Promise<void>) {
-    if (busyNow.current) return;
+    if (!enabled || busyNow.current) return;
     busyNow.current = true;
     setBusy(true);
     setError('');
@@ -103,75 +113,119 @@ export function LocalCapture() {
           <p>Capture stays local. Analysis needs a separate approval.</p>
         </div>
         <button
-          disabled={busy}
+          disabled={busy || !enabled}
           onClick={() => void action(() => localCapture.pauseAll())}
         >
           Pause all capture
         </button>
       </div>
-      <p role="status">{status}</p>
+      {!loaded && !error && <p role="status">Loading local projects…</p>}
+      {status && (
+        <p role="status" className="capture-status">
+          {status}
+        </p>
+      )}
+      {loaded && projects.length === 0 && !error && (
+        <section className="welcome-card" aria-labelledby="welcome-title">
+          <div className="welcome-copy">
+            <span className="eyebrow">From doing to understanding</span>
+            <h3 id="welcome-title">
+              Your work.
+              <br />A little clearer.
+            </h3>
+            <p>
+              Connect a project, code with Codex, then explore the ideas behind
+              what you built.
+            </p>
+            <a
+              className="primary-link"
+              href="#project-approval"
+              onClick={() => {
+                if (approval.current) approval.current.open = true;
+              }}
+            >
+              Connect your first project <span aria-hidden="true">↗</span>
+            </a>
+            <span className="welcome-note">
+              Local capture first. AI analysis only when you choose.
+            </span>
+          </div>
+          <img
+            src={character}
+            alt="mochi’s orange and graphite companion"
+            className="welcome-character"
+          />
+        </section>
+      )}
       {error && (
         <p role="alert" className="error">
           {error}
         </p>
       )}
-      <details>
+      <details
+        ref={approval}
+        id="project-approval"
+        className="project-approval"
+      >
         <summary>Approve a project folder</summary>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!rootConsent) return;
-            void action(async () => {
-              const p = await localCapture.approve(path, name);
-              setProjectId(p.id);
-              setPath('');
-              setName('');
-              setRootConsent(false);
-            });
-          }}
-        >
-          <label>
-            Project alias
-            <input
-              required
-              maxLength={80}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="My learning project"
-            />
-          </label>
-          <label>
-            Project folder
-            <input
-              required
-              value={path}
-              onChange={(e) => setPath(e.target.value)}
-              placeholder="/Users/you/Projects/example"
-            />
-          </label>
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={rootConsent}
-              onChange={(e) => setRootConsent(e.target.checked)}
-            />
-            I approve this folder as the project scope. Capture remains off
-            until I approve the connection.
-          </label>
-          <button disabled={busy || !rootConsent} type="submit">
-            Approve folder
-          </button>
-        </form>
+        <fieldset disabled={!enabled || busy}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!rootConsent) return;
+              void action(async () => {
+                const p = await localCapture.approve(path, name);
+                setProjectId(p.id);
+                setPath('');
+                setName('');
+                setRootConsent(false);
+              });
+            }}
+          >
+            <label>
+              Project alias
+              <input
+                required
+                maxLength={80}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="My learning project"
+              />
+            </label>
+            <label>
+              Project folder
+              <input
+                required
+                value={path}
+                onChange={(e) => setPath(e.target.value)}
+                placeholder="/Users/you/Projects/example"
+              />
+            </label>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={rootConsent}
+                onChange={(e) => setRootConsent(e.target.checked)}
+              />
+              I approve this folder as the project scope. Capture remains off
+              until I approve the connection.
+            </label>
+            <button disabled={busy || !rootConsent} type="submit">
+              Approve folder
+            </button>
+          </form>
+        </fieldset>
       </details>
-      <LearningSettings />
       <label>
         Project
         <select
-          disabled={busy}
+          disabled={busy || !enabled}
           value={projectId}
           onChange={(e) => {
             browsingOlder.current = false;
             setProjectId(e.target.value);
+            setSessions({ items: [], next: null });
+            setCaptureConsent(false);
             setDetail(null);
             setPreview(null);
             setDeleting(null);
@@ -198,7 +252,7 @@ export function LocalCapture() {
           </p>
           <div className="actions">
             <button
-              disabled={busy}
+              disabled={busy || !enabled}
               onClick={() =>
                 void action(async () => {
                   setCaptureConsent(false);
@@ -209,7 +263,7 @@ export function LocalCapture() {
               Review connection
             </button>
             <button
-              disabled={busy}
+              disabled={busy || !enabled}
               onClick={() =>
                 void action(() =>
                   localCapture.tracking(project.id, !project.tracking),
@@ -219,7 +273,7 @@ export function LocalCapture() {
               {project.tracking ? 'Pause this project' : 'Enable local capture'}
             </button>
             <button
-              disabled={busy}
+              disabled={busy || !enabled}
               onClick={() =>
                 void action(async () =>
                   setPreview(await localCapture.preview(project.id, true)),
@@ -228,13 +282,17 @@ export function LocalCapture() {
             >
               Review disconnect
             </button>
-            <button disabled={busy} onClick={() => setDeleting('project')}>
+            <button
+              className="danger"
+              disabled={busy || !enabled}
+              onClick={() => setDeleting('project')}
+            >
               Delete project data
             </button>
           </div>
           <p className="muted">
             Enabling approves local tracking for this project. Approved capture
-            can continue while Mochi is closed; processing resumes when you
+            can continue while mochi is closed; processing resumes when you
             reopen it.
           </p>
         </>
@@ -244,14 +302,14 @@ export function LocalCapture() {
           <h3 id="connection-title">Review the connection change</h3>
           <p>
             {preview.action === 'disconnect'
-              ? 'Remove only the Mochi-owned hooks and stop capture.'
+              ? 'Remove only the mochi-owned hooks and stop capture.'
               : 'Install project hooks that capture available Codex prompts, responses and activity into private local storage.'}
           </p>
           <p>
             Configuration file: <code>{preview.target}</code>
           </p>
           <details>
-            <summary>Exact Mochi command and events</summary>
+            <summary>Exact mochi command and events</summary>
             <pre>{preview.ownedCommand}</pre>
             <p>{preview.events.join(', ')}</p>
           </details>
@@ -281,7 +339,7 @@ export function LocalCapture() {
                   await localCapture.apply(preview.planId, captureConsent);
                   setPreview(null);
                   setStatus(
-                    'Connection applied. Review the Mochi hooks in Codex /hooks before coding.',
+                    'Connection applied. Review the mochi hooks in Codex /hooks before coding.',
                   );
                 })
               }
@@ -296,11 +354,11 @@ export function LocalCapture() {
       )}
       {project && (
         <div className="session-layout">
-          <section aria-labelledby="sessions-title">
+          <section className="session-library" aria-labelledby="sessions-title">
             <h3 id="sessions-title">Sessions</h3>
             {sessions.items.length === 0 ? (
-              <p>
-                No captured sessions yet. Connect the project, review Mochi
+              <p className="empty-state">
+                No captured sessions yet. Connect the project, review mochi
                 hooks in Codex, then work in the CLI as usual.
               </p>
             ) : (
@@ -326,7 +384,7 @@ export function LocalCapture() {
             )}
             <div className="actions">
               <button
-                disabled={busy}
+                disabled={busy || !enabled}
                 onClick={() =>
                   void action(async () => {
                     browsingOlder.current = false;
@@ -338,7 +396,7 @@ export function LocalCapture() {
               </button>
               {sessions.next && (
                 <button
-                  disabled={busy}
+                  disabled={busy || !enabled}
                   onClick={() =>
                     void action(async () => {
                       browsingOlder.current = true;
@@ -353,6 +411,16 @@ export function LocalCapture() {
               )}
             </div>
           </section>
+          {!detail && (
+            <section className="session-placeholder">
+              <span aria-hidden="true">▤</span>
+              <h3>A space to look back.</h3>
+              <p>
+                Choose a captured session to explore its activity, code context
+                and explanation.
+              </p>
+            </section>
+          )}
           {detail && (
             <section className="panel" aria-labelledby="session-title">
               <h3 id="session-title">Observed session</h3>
@@ -368,7 +436,7 @@ export function LocalCapture() {
               )}
               {detail.session.restarted && (
                 <p>
-                  Mochi restarted during this episode. Its boundary is
+                  mochi restarted during this episode. Its boundary is
                   uncertain.
                 </p>
               )}
@@ -380,7 +448,11 @@ export function LocalCapture() {
               )}
               <div className="actions">
                 <button
-                  disabled={busy}
+                  disabled={
+                    busy ||
+                    !enabled ||
+                    detail.session.captureState === 'finalized'
+                  }
                   onClick={() =>
                     void action(async () => {
                       await localCapture.finish(detail.session.id);
@@ -391,7 +463,7 @@ export function LocalCapture() {
                   Finish session
                 </button>
                 <button
-                  disabled={busy}
+                  disabled={busy || !enabled}
                   onClick={() =>
                     void action(async () =>
                       setDetail(await localCapture.detail(detail.session.id)),
@@ -400,10 +472,17 @@ export function LocalCapture() {
                 >
                   Refresh details
                 </button>
-                <button onClick={() => setDeleting('session')}>
+                <button
+                  className="danger"
+                  disabled={busy}
+                  onClick={() => setDeleting('session')}
+                >
                   Delete session
                 </button>
               </div>
+              <p className="muted">
+                Finish ends mochi’s observed episode; it does not stop Codex.
+              </p>
               <h4>Activity</h4>
               <p>
                 {detail.eventCount} observed events. Missing results remain
@@ -474,6 +553,8 @@ export function LocalCapture() {
       {deleting && (
         <section
           className="panel"
+          ref={deletePrompt}
+          tabIndex={-1}
           role="alertdialog"
           aria-labelledby="delete-title"
         >
@@ -491,7 +572,7 @@ export function LocalCapture() {
           </p>
           <div className="actions">
             <button
-              disabled={busy}
+              disabled={busy || !enabled}
               onClick={() =>
                 void action(async () => {
                   if (deleting === 'project' && project) {

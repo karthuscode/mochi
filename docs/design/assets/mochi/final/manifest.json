@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "identity": "mochi-signal",
+  "version": "1.0.0",
+  "selectedAt": "2026-10-01",
+  "palette": {
+    "coral": "#FF7048",
+    "graphite": "#171B24",
+    "paper": "#FAFAFA"
+  },
+  "vectorSource": "../../../../../tools/brand/build-assets.mjs",
+  "characterGeneration": "built-in image_gen; see character-prompt.json",
+  "status": "selected-static-identity; companion-runtime-not-implemented",
+  "assets": [
+    {
+      "path": "app-icon-1024.png",
+      "bytes": 42885,
+      "sha256": "499bd250d2ac36093fd6a2837c02246e3e94876fcb44745c9e138c6847bb89df",
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGBA"
+    },
+    {
+      "path": "app-icon-128.png",
+      "bytes": 2786,
+      "sha256": "acc8e47c24c36966f5dfcec6fadb11368e267cfbaf09dff0807a5c236c0f7c97",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "path": "app-icon-16.png",
+      "bytes": 427,
+      "sha256": "c0d01c7b2a4d5f96930e7243902e801ca3990f56f438e08f60203d47a16d1b45",
+      "width": 16,
+      "height": 16,
+      "mode": "RGBA"
+    },
+    {
+      "path": "app-icon-256.png",
+      "bytes": 6349,
+      "sha256": "75921b017728853f72f181a74d3971779dfdf48f987125062ba8ed3472ce9ba2",
+      "width": 256,
+      "height": 256,
+      "mode": "RGBA"
+    },
+    {
+      "path": "app-icon-32.png",
+      "bytes": 774,
+      "sha256": "1752c019b564318331ce184bc36643683987e21f4a3279d89b881cac91df1ee1",
+      "width": 32,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "app-icon-512.png",
+      "bytes": 16020,
+      "sha256": "3b80d8b1f2d11e691c09268649b2beb263ec56469da16a074b09f77fb4abcab2",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "app-icon-64.png",
+      "bytes": 1388,
+      "sha256": "2f4f66cb3afc9b69991dd9c858ca1683270873ed40fdf04f6cf99a86b60464da",
+      "width": 64,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "app-icon.icns",
+      "bytes": 57837,
+      "sha256": "9b9cb5626c9af6289e7cd88b3599a736461688919d2e1bd3cdc132ecd59f491a"
+    },
+    {
+      "path": "app-icon.svg",
+      "bytes": 727,
+      "sha256": "1f28a45c4665e94b2cd0d5eb106953a396fa9324eb868825f6fe81cf5e1daad1",
+      "viewBox": "0 0 1024 1024"
+    },
+    {
+      "path": "character-idle.png",
+      "bytes": 645152,
+      "sha256": "16bf1dc9d22b60170708ac88da3440b751d4ebce99039d3a5082e6a72125f167",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logo-dark.png",
+      "bytes": 65798,
+      "sha256": "58623bb8f5ffee1ef92eac9fe85e53777407499aa971ecf7114bf65f7534adc6",
+      "width": 2600,
+      "height": 743,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logo-dark.svg",
+      "bytes": 1005,
+      "sha256": "fee2f327916a55d0083b79f669f0b74373af84b8baaf17c2a0b68757baf6d5c9",
+      "viewBox": "0 0 700 200"
+    },
+    {
+      "path": "logo-light.png",
+      "bytes": 69004,
+      "sha256": "0003ba8f5da2e164c2b7e6c1b19d5fc8487a4f7bb679ec7890b693f145304627",
+      "width": 2600,
+      "height": 743,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logo-light.svg",
+      "bytes": 1006,
+      "sha256": "ad8f96a810308f73f8d90807888612e12525b910a158313cecfcf9583ca4065e",
+      "viewBox": "0 0 700 200"
+    },
+    {
+      "path": "logo-monochrome-dark.png",
+      "bytes": 67355,
+      "sha256": "b2899d256c25835b7d7c4925b3d8881b3335cbac3a6668a476546e15da333092",
+      "width": 2600,
+      "height": 743,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logo-monochrome-dark.svg",
+      "bytes": 1000,
+      "sha256": "ca07635ed68bed578aa2a518f49e1cb8aa848851de1d7a19c4aed645fffb64d7",
+      "viewBox": "0 0 700 200"
+    },
+    {
+      "path": "logo-monochrome-light.png",
+      "bytes": 63632,
+      "sha256": "1eabe02e4f89dc5153062d1b6765727fe25205a387037cd62ae98dc8418d5cab",
+      "width": 2600,
+      "height": 743,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logo-monochrome-light.svg",
+      "bytes": 1001,
+      "sha256": "9a2928c931509810cae3fc8626b51137a87922ca744f4c430ac311ca15f45b23",
+      "viewBox": "0 0 700 200"
+    },
+    {
+      "path": "mark-monochrome-dark.svg",
+      "bytes": 542,
+      "sha256": "88a6ae08fc5a3a44fc122aa2da902435f2a053dc1b3356e681c84734fa535285",
+      "viewBox": "0 0 256 256"
+    },
+    {
+      "path": "mark-monochrome-light.svg",
+      "bytes": 543,
+      "sha256": "08d5444e36e77179ea44fe7247b223a48855cb78919503cedbcaf90c4de20e0f",
+      "viewBox": "0 0 256 256"
+    },
+    {
+      "path": "mark.png",
+      "bytes": 29408,
+      "sha256": "6e7c247c42a40ab2091602c4c6ec16198752e04beddbcaadc8218d96e68ac1d6",
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGBA"
+    },
+    {
+      "path": "mark.svg",
+      "bytes": 544,
+      "sha256": "ef91bc9541928606a0f8965a12591f284deeae909cdf3791ce7b51bb2792ef7c",
+      "viewBox": "0 0 256 256"
+    },
+    {
+      "path": "menu-bar-22.png",
+      "bytes": 341,
+      "sha256": "5adb54fef9b9022e80c2318bd5065ef343913e34dedfbd5f6b5470effe669afb",
+      "width": 22,
+      "height": 22,
+      "mode": "RGBA"
+    },
+    {
+      "path": "menu-bar-44.png",
+      "bytes": 584,
+      "sha256": "fcb073c5e4f9923fde5769db881e7e8ff5d58377df3e06833651db84b7f1fa30",
+      "width": 44,
+      "height": 44,
+      "mode": "RGBA"
+    },
+    {
+      "path": "menu-bar.svg",
+      "bytes": 755,
+      "sha256": "17c3efd186d38c4434da2e32213ccfea04bf014c5e3a55da2de0dae3e61d145c",
+      "viewBox": "0 0 22 22"
+    },
+    {
+      "path": "visual-proof.png",
+      "bytes": 211070,
+      "sha256": "864e9df1a53cae372075a1c1ab630181d5d9c67371be4a9181d0a1b8cbc72feb",
+      "width": 1000,
+      "height": 950,
+      "mode": "RGBA"
+    },
+    {
+      "path": "wordmark-dark.svg",
+      "bytes": 534,
+      "sha256": "b7d77417c4287f08573f7bf7dd16016fd4c93e195975a51c2d3672ef79b3a2ab",
+      "viewBox": "0 0 430 140"
+    },
+    {
+      "path": "wordmark-light.svg",
+      "bytes": 540,
+      "sha256": "2ccfd71ba6bbdcbbf9d327dabd18fee9a8c2d10fa4d5bb53632d704f4b065cf0",
+      "viewBox": "0 0 430 140"
+    }
+  ]
+}
