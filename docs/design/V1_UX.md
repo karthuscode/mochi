@@ -117,3 +117,19 @@ Minimum intended window 900×640 points; readable debrief content capped around 
 ## Acceptance
 
 Walk through first-run, normal lesson, offline review, partial capture, revoked consent and deletion on a real arm64 Mac. No essential action requires a browser, account, developer console, mouse-only input, or hidden setting. See [VALIDATION_PLAN.md](../implementation/VALIDATION_PLAN.md).
+
+## Aura UI trial — 2026-10-02
+
+The assigned [aura trial](../implementation/UI_AURA_TRIAL.md) uses neutral solid
+light/dark bases with a subtle Liquid Ether overlay. The user's follow-up removed
+the initial Silver Mist/Aurora Beams gradients and grain.
+Animated background is a window-local choice; system reduced motion overrides
+it. The effect never owns input and pauses while the window is inactive. Code
+fields remain near-opaque. System/Light/Dark preferences do not persist.
+
+A sticky glass header replaces the left rail. Repeated taglines and empty
+controls are removed. Project details, disconnect,
+provider metadata and About & diagnostics use disclosures. Existing explanation
+precedes expandable Activity and Code context; references open their source.
+Consent, remote cost/provider retention and deletion limits remain at the action
+boundary. No new route, summary mode or ready-lesson claim.

@@ -116,6 +116,7 @@ describe('local capture interface boundaries', () => {
   it('requires a separate deletion confirmation and allows keeping data', async () => {
     render(<LocalCapture />);
     await selectFirst();
+    fireEvent.click(screen.getByText('Project details & disconnect'));
     fireEvent.click(
       screen.getByRole('button', { name: 'Delete project data' }),
     );

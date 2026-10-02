@@ -119,3 +119,12 @@ Additive migrations 0004/0005 implement durable capture episodes and internal le
 ## Personal MVP interface checkpoint — 2026-10-02
 
 React now presents persistent Sessions content and a separate Settings view, with selected local Signal assets and window-local appearance state. Navigation does not remount the selected session/self-check or broaden IPC authority. Browser rendering explicitly disables native actions and skips all project/status polling; it neither inserts fixtures nor imitates a native capture runtime. Lowercase display branding and the `mochi.app` bundle name preserve existing technical IDs and versioned DTOs. No migration, dependency, consent, network or capture contract changes. See [UI validation](../implementation/UI_FINALIZATION.md).
+
+## Aura presentation checkpoint — 2026-10-02
+
+The [aura trial](../implementation/UI_AURA_TRIAL.md) adds a local decorative
+React/WebGL boundary using pinned Three.js over solid light/dark theme bases. It
+has no IPC, filesystem, credential or network authority. Activity/media-query
+subscriptions govern animation and cleanup independently of capture/analysis;
+CSP and native capabilities remain unchanged. prepare:native supplies debug and
+release helper resources before native tooling, including a fresh CI checkout.

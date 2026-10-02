@@ -5,6 +5,8 @@ import { App } from './App';
 import { localCapture } from './native/local-capture';
 import { learning } from './native/learning';
 import type { Lesson, SendPreview, Attempt } from './native/learning';
+vi.mock('./background/LiquidEther', () => ({ LiquidEther: () => null }));
+
 vi.mock('./native/local-capture', () => ({
   localCapture: {
     projects: vi.fn(),
@@ -209,6 +211,21 @@ describe('internal learning controls', () => {
     expect(learning.submit).not.toHaveBeenCalled();
     expect(learning.send).not.toHaveBeenCalled();
     expect(learning.permission).not.toHaveBeenCalled();
+  });
+
+  it('opens the retained source snapshot and focuses it from an evidence link', async () => {
+    render(<LearningPanel sessionId={id} finalized />);
+    const reference = (
+      await screen.findAllByRole('link', { name: '[evidence]' })
+    )[0];
+    expect(reference).toBeDefined();
+    if (!reference) return;
+    fireEvent.click(reference);
+    const source = document.getElementById(`evidence-${id}-code:after:fixture`);
+    expect(source).toHaveFocus();
+    expect(source?.closest('details')).toHaveAttribute('open');
+    expect(source).toBeVisible();
+    expect(learning.send).not.toHaveBeenCalled();
   });
 
   it('never sends on mount or preview, and requires the exact send checkbox', async () => {

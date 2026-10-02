@@ -26,10 +26,12 @@ export function CompanionControls() {
     >
       <h2 id="desktop-mochi-title">Desktop mochi</h2>
       <p>Place mochi where you want. Drag to move it; click to open the app.</p>
-      <p className="muted">
-        Static character trial. Hidden on startup; placement lasts for this run.
-        Animation and saved placement are still ahead.
-      </p>
+      <details>
+        <summary>Preview limits</summary>
+        <p className="muted">
+          Static character; hidden on startup. Placement lasts for this run.
+        </p>
+      </details>
       <div className="actions">
         <button type="button" disabled={busy} onClick={() => void change(true)}>
           Show desktop mochi

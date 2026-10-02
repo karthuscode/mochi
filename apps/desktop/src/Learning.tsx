@@ -108,12 +108,17 @@ export function LearningSettings() {
         Allow remote analysis controls for this app run. Every session or answer
         still requires an exact send approval.
       </label>
-      <p>
-        Model: {status?.model ?? 'gpt-4o-mini-2024-07-18'}. No content is sent
-        by opening mochi, storing a key or enabling this control. Remote
-        permission resets to off on restart. Requests use OpenAI with storage
-        disabled; provider retention policies still apply.
+      <p className="muted">
+        No content is sent by opening mochi or enabling this control. Permission
+        resets on restart.
       </p>
+      <details>
+        <summary>Provider details</summary>
+        <p>
+          Model: {status?.model ?? 'gpt-4o-mini-2024-07-18'}. Requests use
+          OpenAI with storage disabled; provider retention policies still apply.
+        </p>
+      </details>
       {status?.running && (
         <button onClick={() => void action(() => learning.cancel())}>
           Cancel running analysis
@@ -179,8 +184,11 @@ export function LearningPanel({
       `evidence-${sessionId}-${reference}`,
     );
     if (!target) return;
-    const container = target.closest('details');
-    if (container) container.open = true;
+    let container = target.parentElement;
+    while (container) {
+      if (container instanceof HTMLDetailsElement) container.open = true;
+      container = container.parentElement;
+    }
     target.focus();
   }
   return (

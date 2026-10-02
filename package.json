@@ -16,14 +16,15 @@
     "desktop:build": "pnpm --filter @mochi/desktop tauri build --bundles app",
     "test": "pnpm test:frontend && pnpm test:rust",
     "test:frontend": "vitest run",
-    "test:rust": "cargo test --workspace --locked",
+    "test:rust": "pnpm prepare:native && cargo test --workspace --locked",
     "lint": "pnpm lint:frontend && pnpm lint:rust",
     "lint:frontend": "eslint . --max-warnings 0",
-    "lint:rust": "cargo clippy --workspace --all-targets --locked -- -D warnings",
+    "lint:rust": "pnpm prepare:native && cargo clippy --workspace --all-targets --locked -- -D warnings",
     "format": "prettier --write . && cargo fmt --all",
     "format:check": "prettier --check . && cargo fmt --all -- --check",
     "typecheck": "pnpm -r typecheck",
-    "check:rust": "cargo check --workspace --all-targets --locked"
+    "check:rust": "pnpm prepare:native && cargo check --workspace --all-targets --locked",
+    "prepare:native": "cargo build -p mochi-hook --locked && cargo build -p mochi-hook --release --locked"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

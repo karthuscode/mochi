@@ -5,6 +5,10 @@ import { App } from './App';
 import { localCapture } from './native/local-capture';
 import { learning } from './native/learning';
 
+vi.mock('./background/LiquidEther', () => ({
+  LiquidEther: () => <div data-testid="liquid-ether" />,
+}));
+
 vi.mock('./native/local-capture', () => ({
   localCapture: {
     projects: vi.fn(),
@@ -54,9 +58,10 @@ describe('personal MVP shell', () => {
       screen.getByRole('button', { name: 'Approve folder' }),
     ).toBeDisabled();
     expect(
-      screen.getByRole('button', { name: 'Pause all capture' }),
-    ).toBeDisabled();
+      screen.queryByRole('button', { name: 'Pause all capture' }),
+    ).not.toBeInTheDocument();
     settings();
+    fireEvent.click(screen.getByText('About & diagnostics'));
     expect(
       screen.getByRole('button', { name: 'Check desktop connection' }),
     ).toBeDisabled();
@@ -106,6 +111,61 @@ describe('personal MVP shell', () => {
     expect(learning.send).not.toHaveBeenCalled();
   });
 
+  it('keeps the background switch across navigation without native calls', () => {
+    render(<App />);
+    expect(screen.getByTestId('liquid-ether')).toBeInTheDocument();
+    settings();
+    const toggle = screen.getByRole('checkbox', {
+      name: 'Animated background',
+    });
+    expect(toggle).toBeChecked();
+    fireEvent.click(toggle);
+    expect(screen.queryByTestId('liquid-ether')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sessions' }));
+    settings();
+    expect(
+      screen.getByRole('checkbox', { name: 'Animated background' }),
+    ).not.toBeChecked();
+    expect(learning.permission).not.toHaveBeenCalled();
+    expect(learning.send).not.toHaveBeenCalled();
+  });
+
+  it('honors reduced motion even with the animation preference enabled', () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    render(<App />);
+    settings();
+    expect(screen.queryByTestId('liquid-ether')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('checkbox', { name: 'Animated background' }),
+    ).toBeDisabled();
+    expect(screen.getByText(/Reduce Motion setting/)).toBeVisible();
+  });
+
+  it('resolves system dark appearance and allows a light override', () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query === '(prefers-color-scheme: dark)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    render(<App />);
+    expect(screen.getByRole('main')).toHaveClass('theme-dark');
+    settings();
+    fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
+    expect(screen.getByRole('main')).toHaveClass('theme-light');
+  });
+
   it('validates and displays a native IPC response in settings', async () => {
     vi.stubGlobal('isTauri', true);
     mockIPC((command) => {
@@ -114,6 +174,7 @@ describe('personal MVP shell', () => {
     });
     render(<App />);
     settings();
+    fireEvent.click(screen.getByText('About & diagnostics'));
     fireEvent.click(
       screen.getByRole('button', { name: 'Check desktop connection' }),
     );
@@ -132,6 +193,7 @@ describe('personal MVP shell', () => {
       });
       render(<App />);
       settings();
+      fireEvent.click(screen.getByText('About & diagnostics'));
       fireEvent.click(
         screen.getByRole('button', { name: 'Check desktop connection' }),
       );

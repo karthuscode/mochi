@@ -16,11 +16,11 @@ Your sessions stay on your Mac. Remote analysis starts off, uses your own OpenAI
 
 ## Showcase
 
-| Light                                                                                    | Dark                                                                                   |
-| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| ![mochi — light desktop interface](docs/implementation/assets/ui-finalization-light.png) | ![mochi — dark desktop interface](docs/implementation/assets/ui-finalization-dark.png) |
+| Light                                                                             | Dark                                                                            |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| ![mochi — light desktop interface](docs/implementation/assets/ui-solid-light.jpg) | ![mochi — dark desktop interface](docs/implementation/assets/ui-solid-dark.jpg) |
 
-Native screenshots of the empty first-run interface. The Signal robot, app icon and understated glass surfaces are bundled locally; the optional floating character is currently a static trial.
+Browser appearance-preview screenshots of the solid-base follow-up. Native controls remain disabled in this preview; the same frontend is bundled in the macOS test build. The Signal robot, app icon and understated glass surfaces are bundled locally; the optional floating character is currently a static trial.
 
 ## What works today
 
@@ -44,7 +44,7 @@ Start with a disposable project and follow the [personal trial guide](docs/imple
 
 **This is an engineering preview, not a finished V1 release.** Codex CLI **0.151.0** is the verified installation baseline; Desktop capture remains partial. The complete new live CLI → OpenAI → learning trial and human model-quality review are still pending. Mini challenges, knowledge tracking, spaced review, companion animation and distribution signing/notarization are future work. Local storage relies on account permissions rather than application-level encryption.
 
-The checkpoint passed **144 Rust tests and 43 frontend tests**, plus all nine repository gates on macOS Apple Silicon. See [validation evidence](docs/implementation/UI_FINALIZATION.md) for the tested boundaries, intermittent helper-fixture timing and remaining native gates.
+The aura UI checkpoint passed **144 Rust tests and 56 frontend tests**, plus all nine repository gates on macOS Apple Silicon. See [validation evidence](docs/implementation/UI_AURA_TRIAL.md) for the tested boundaries, intermittent helper-fixture timing and remaining native gates.
 
 Built with **Tauri 2, React, TypeScript, Rust and bundled SQLite**. [Roadmap](docs/implementation/V1_ROADMAP.md) · [Architecture](docs/architecture/ARCHITECTURE.md) · [Privacy](docs/security/PRIVACY_SECURITY.md)
 
@@ -59,7 +59,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-The development app opens the **Sessions** view. Open **Settings → About this preview → Check desktop connection** to verify the Rust IPC response. Quit the app or press Ctrl+C in the terminal to end development. Port 1420 must be available. `pnpm dev:web` starts the browser preview without native IPC; this is a development aid for the desktop frontend.
+The development app opens the **Sessions** view. Open **Settings → About & diagnostics → Check desktop connection** to verify the Rust IPC response. Quit the app or press Ctrl+C in the terminal to end development. Port 1420 must be available. `pnpm dev:web` starts the browser preview without native IPC; this is a development aid for the desktop frontend.
 
 | Command                             | Purpose                                                                |
 | ----------------------------------- | ---------------------------------------------------------------------- |
@@ -69,6 +69,7 @@ The development app opens the **Sessions** view. Open **Settings → About this 
 | `pnpm test`                         | Frontend tests and Rust tests                                          |
 | `pnpm lint`                         | ESLint and Clippy, warnings treated as errors                          |
 | `pnpm format` / `pnpm format:check` | Prettier and rustfmt; master docs retain their original layout         |
+| `pnpm prepare:native`               | Build debug/release capture helpers before native tooling              |
 | `pnpm check:rust`                   | Compile-check every native target                                      |
 | `pnpm build`                        | Typecheck and build frontend assets                                    |
 | `pnpm desktop:build`                | Build the native release binary and local macOS `.app`                 |
@@ -110,7 +111,7 @@ Brief 08 also adds explicit developer commands `connect`, `disconnect`, and `rol
 
 The legacy developer helper spool is `~/Library/Application Support/dev.mochi.desktop/capture/v1/spool`. The app uses a separate `capture-v2-spool` inside Tauri app data and never imports the legacy spool automatically. Authorized production capture obtains the approved root, spool and revision from current private policy; `--spool-root` belongs to the legacy isolated developer flow. Hook trust remains a manual Codex review; installation can use the explicit Brief 08 flow. Never replace an existing hook file wholesale.
 
-Focused commands: `pnpm test:frontend`, `pnpm test:rust`, `pnpm lint:frontend`, `pnpm lint:rust`. Rust checks require the native prerequisites; run `pnpm build` before direct release-mode Cargo commands so embedded frontend assets exist. Normal `desktop:build` handles this automatically.
+Focused commands: `pnpm test:frontend`, `pnpm test:rust`, `pnpm lint:frontend`, `pnpm lint:rust`. Rust checks prepare both hook profiles automatically. For direct workspace Cargo commands, run `pnpm prepare:native` first; run `pnpm build` before direct release-mode Cargo commands so embedded frontend assets exist. Normal `desktop:build` handles this automatically.
 
 Local output: `apps/desktop/dist/`, `target/debug/mochi-desktop`, and `target/release/bundle/macos/mochi.app`. These are ignored. The local app bundle is not a signed/notarized distribution release. CI checks frontend tooling on Ubuntu and native compilation, tests and `.app` building on macOS; it does not prove integration or clean-machine installation.
 
@@ -172,7 +173,7 @@ Rust owns native integration, privacy, persistence and deterministic learning be
 
 ## Personal preview interface
 
-The personal CLI checkpoint now has a glassmorphism Sessions/Settings shell using the selected Signal mark, static character and app icon. Application branding is lowercase `mochi`. Settings includes a window-local System/Light/Dark appearance choice, Keychain/remote controls and the optional static companion. Navigation preserves session drafts; browser rendering is a labelled appearance preview with native actions disabled. See [interface finalization](docs/implementation/UI_FINALIZATION.md) for checks and remaining gates.
+The personal CLI checkpoint now has a glassmorphism Sessions/Settings shell using the selected Signal mark, static character and app icon. Application branding is lowercase `mochi`. Neutral solid light/dark bases and a subtle local Liquid Ether overlay form the new [aura UI trial](docs/implementation/UI_AURA_TRIAL.md). Settings includes window-local System/Light/Dark and Animated background choices, Keychain/remote controls and the optional static companion. Navigation preserves session drafts; browser rendering is a labelled appearance preview with native actions disabled. See [interface finalization](docs/implementation/UI_FINALIZATION.md) for checks and remaining gates.
 
 ## Next task
 

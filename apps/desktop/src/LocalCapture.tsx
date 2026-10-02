@@ -109,15 +109,18 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
     <section aria-labelledby="capture-title" className="local-capture">
       <div className="section-heading">
         <div>
-          <h2 id="capture-title">Your coding sessions</h2>
-          <p>Capture stays local. Analysis needs a separate approval.</p>
+          <h2 id="capture-title" className="sr-only">
+            Your coding sessions
+          </h2>
         </div>
-        <button
-          disabled={busy || !enabled}
-          onClick={() => void action(() => localCapture.pauseAll())}
-        >
-          Pause all capture
-        </button>
+        {projects.some((item) => item.tracking) && (
+          <button
+            disabled={busy || !enabled}
+            onClick={() => void action(() => localCapture.pauseAll())}
+          >
+            Pause all capture
+          </button>
+        )}
       </div>
       {!loaded && !error && <p role="status">Loading local projects…</p>}
       {status && (
@@ -128,11 +131,7 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
       {loaded && projects.length === 0 && !error && (
         <section className="welcome-card" aria-labelledby="welcome-title">
           <div className="welcome-copy">
-            <span className="eyebrow">From doing to understanding</span>
-            <h3 id="welcome-title">
-              Your work.
-              <br />A little clearer.
-            </h3>
+            <h3 id="welcome-title">Understand your next session.</h3>
             <p>
               Connect a project, code with Codex, then explore the ideas behind
               what you built.
@@ -146,9 +145,6 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
             >
               Connect your first project <span aria-hidden="true">↗</span>
             </a>
-            <span className="welcome-note">
-              Local capture first. AI analysis only when you choose.
-            </span>
           </div>
           <img
             src={character}
@@ -216,85 +212,96 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
           </form>
         </fieldset>
       </details>
-      <label>
-        Project
-        <select
-          disabled={busy || !enabled}
-          value={projectId}
-          onChange={(e) => {
-            browsingOlder.current = false;
-            setProjectId(e.target.value);
-            setSessions({ items: [], next: null });
-            setCaptureConsent(false);
-            setDetail(null);
-            setPreview(null);
-            setDeleting(null);
-          }}
-        >
-          <option value="">Choose an approved project</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      {projects.length > 0 && (
+        <label>
+          Project
+          <select
+            disabled={busy || !enabled}
+            value={projectId}
+            onChange={(e) => {
+              browsingOlder.current = false;
+              setProjectId(e.target.value);
+              setSessions({ items: [], next: null });
+              setCaptureConsent(false);
+              setDetail(null);
+              setPreview(null);
+              setDeleting(null);
+            }}
+          >
+            <option value="">Choose an approved project</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {project && (
         <>
-          <p className="muted">{project.root}</p>
-          <p>
-            <strong>
-              {project.tracking
-                ? 'Local capture enabled'
-                : 'Local capture paused'}
-            </strong>{' '}
-            · Hook trust is reviewed separately in Codex.
-          </p>
-          <div className="actions">
-            <button
-              disabled={busy || !enabled}
-              onClick={() =>
-                void action(async () => {
-                  setCaptureConsent(false);
-                  setPreview(await localCapture.preview(project.id));
-                })
-              }
-            >
-              Review connection
-            </button>
-            <button
-              disabled={busy || !enabled}
-              onClick={() =>
-                void action(() =>
-                  localCapture.tracking(project.id, !project.tracking),
-                )
-              }
-            >
-              {project.tracking ? 'Pause this project' : 'Enable local capture'}
-            </button>
-            <button
-              disabled={busy || !enabled}
-              onClick={() =>
-                void action(async () =>
-                  setPreview(await localCapture.preview(project.id, true)),
-                )
-              }
-            >
-              Review disconnect
-            </button>
-            <button
-              className="danger"
-              disabled={busy || !enabled}
-              onClick={() => setDeleting('project')}
-            >
-              Delete project data
-            </button>
+          <div className="project-controls">
+            <p>
+              <strong>
+                {project.tracking
+                  ? 'Local capture enabled'
+                  : 'Local capture paused'}
+              </strong>{' '}
+            </p>
+            <div className="actions">
+              <button
+                disabled={busy || !enabled}
+                onClick={() =>
+                  void action(async () => {
+                    setCaptureConsent(false);
+                    setPreview(await localCapture.preview(project.id));
+                  })
+                }
+              >
+                Review connection
+              </button>
+              <button
+                disabled={busy || !enabled}
+                onClick={() =>
+                  void action(() =>
+                    localCapture.tracking(project.id, !project.tracking),
+                  )
+                }
+              >
+                {project.tracking
+                  ? 'Pause this project'
+                  : 'Enable local capture'}
+              </button>
+            </div>
+            <p className="muted">
+              Enabling approves local tracking for this project. Approved
+              capture can continue while mochi is closed; processing resumes
+              when you reopen it.
+            </p>
+            <details className="project-details">
+              <summary>Project details & disconnect</summary>
+              <p className="muted">{project.root}</p>
+              <p>Hook trust is reviewed separately in Codex /hooks.</p>
+              <div className="actions">
+                <button
+                  disabled={busy || !enabled}
+                  onClick={() =>
+                    void action(async () =>
+                      setPreview(await localCapture.preview(project.id, true)),
+                    )
+                  }
+                >
+                  Review disconnect
+                </button>
+                <button
+                  className="danger"
+                  disabled={busy || !enabled}
+                  onClick={() => setDeleting('project')}
+                >
+                  Delete project data
+                </button>
+              </div>
+            </details>
           </div>
-          <p className="muted">
-            Enabling approves local tracking for this project. Approved capture
-            can continue while mochi is closed; processing resumes when you
-            reopen it.
-          </p>
         </>
       )}
       {preview && (
@@ -414,7 +421,7 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
           {!detail && (
             <section className="session-placeholder">
               <span aria-hidden="true">▤</span>
-              <h3>A space to look back.</h3>
+              <h3>Choose a session</h3>
               <p>
                 Choose a captured session to explore its activity, code context
                 and explanation.
@@ -483,69 +490,75 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
               <p className="muted">
                 Finish ends mochi’s observed episode; it does not stop Codex.
               </p>
-              <h4>Activity</h4>
-              <p>
-                {detail.eventCount} observed events. Missing results remain
-                unknown.
-              </p>
-              <ol className="events">
-                {detail.events.map((e) => (
-                  <li key={e.id}>
-                    <strong>{e.title}</strong>
-                    {e.text && <pre>{e.text}</pre>}
-                    {e.truncated && (
-                      <p>
-                        Display shortened; recorded evidence remains bounded.
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ol>
-              <div className="actions">
-                <button
-                  onClick={() =>
-                    void action(async () =>
-                      setDetail(await localCapture.detail(detail.session.id)),
-                    )
-                  }
-                >
-                  First events
-                </button>
-                {detail.nextSequence !== null && (
-                  <button
-                    onClick={() =>
-                      void action(async () =>
-                        setDetail(
-                          await localCapture.detail(
-                            detail.session.id,
-                            detail.nextSequence,
-                          ),
-                        ),
-                      )
-                    }
-                  >
-                    Next events
-                  </button>
-                )}
-              </div>
-              <h4>Code context</h4>
-              <p>{detail.gitNotice}</p>
-              {detail.code.map((f) => (
-                <details key={f.path}>
-                  <summary>{f.path}</summary>
-                  {f.content !== null ? (
-                    <pre>{f.content}</pre>
-                  ) : (
-                    <p>Content was omitted by capture policy or unavailable.</p>
-                  )}
-                  {f.omitted && <p>Some content is omitted.</p>}
-                </details>
-              ))}
               <LearningPanel
                 key={detail.session.id}
                 sessionId={detail.session.id}
                 finalized={detail.session.captureState === 'finalized'}
               />
+              <details className="evidence-disclosure">
+                <summary>Activity · {detail.eventCount} events</summary>
+                <p>
+                  {detail.eventCount} observed events. Missing results remain
+                  unknown.
+                </p>
+                <ol className="events">
+                  {detail.events.map((e) => (
+                    <li key={e.id}>
+                      <strong>{e.title}</strong>
+                      {e.text && <pre>{e.text}</pre>}
+                      {e.truncated && (
+                        <p>
+                          Display shortened; recorded evidence remains bounded.
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+                <div className="actions">
+                  <button
+                    onClick={() =>
+                      void action(async () =>
+                        setDetail(await localCapture.detail(detail.session.id)),
+                      )
+                    }
+                  >
+                    First events
+                  </button>
+                  {detail.nextSequence !== null && (
+                    <button
+                      onClick={() =>
+                        void action(async () =>
+                          setDetail(
+                            await localCapture.detail(
+                              detail.session.id,
+                              detail.nextSequence,
+                            ),
+                          ),
+                        )
+                      }
+                    >
+                      Next events
+                    </button>
+                  )}
+                </div>
+              </details>
+              <details className="evidence-disclosure">
+                <summary>Code context</summary>
+                <p>{detail.gitNotice}</p>
+                {detail.code.map((f) => (
+                  <details key={f.path}>
+                    <summary>{f.path}</summary>
+                    {f.content !== null ? (
+                      <pre>{f.content}</pre>
+                    ) : (
+                      <p>
+                        Content was omitted by capture policy or unavailable.
+                      </p>
+                    )}
+                    {f.omitted && <p>Some content is omitted.</p>}
+                  </details>
+                ))}
+              </details>
             </section>
           )}
         </div>
@@ -592,12 +605,6 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
           </div>
         </section>
       )}
-      <p className="muted">
-        SQLite is protected by your local account permissions, without
-        application-level encryption. This is an internal CLI learning test
-        build. Complete lessons, mini challenges, knowledge tracking and spaced
-        review remain later milestones.
-      </p>
     </section>
   );
 }

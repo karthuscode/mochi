@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "dev.mochi.desktop",
   "build": {
-    "beforeDevCommand": "cargo build -p mochi-hook --locked && pnpm dev",
+    "beforeDevCommand": "pnpm --dir ../.. prepare:native && pnpm dev",
     "devUrl": "http://127.0.0.1:1420",
-    "beforeBuildCommand": "pnpm --dir ../.. build && cargo build -p mochi-hook --release --locked",
+    "beforeBuildCommand": "pnpm --dir ../.. build && pnpm --dir ../.. prepare:native",
     "frontendDist": "../dist"
   },
   "app": {
@@ -55,7 +55,8 @@
       "minimumSystemVersion": "12.0"
     },
     "resources": {
-      "../../../target/release/mochi-hook": "mochi-hook"
+      "../../../target/release/mochi-hook": "mochi-hook",
+      "../../../THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md"
     }
   }
 }

@@ -4,15 +4,20 @@ import { CompanionControls } from './CompanionControls';
 import { AppFrame } from '@mochi/ui';
 import { isTauri } from '@tauri-apps/api/core';
 import { useState } from 'react';
+import { AuraBackground } from './background/AuraBackground';
+import { useMediaPreference } from './background/preferences';
+import type { Appearance } from './background/preferences';
 import { getAppInfo } from './native/app-info';
 import mark from '../../../docs/design/assets/mochi/final/mark.svg';
 
 export function App() {
   const native = isTauri();
   const [page, setPage] = useState<'sessions' | 'settings'>('sessions');
-  const [appearance, setAppearance] = useState<'system' | 'light' | 'dark'>(
-    'system',
-  );
+  const [appearance, setAppearance] = useState<Appearance>('system');
+  const [animated, setAnimated] = useState(true);
+  const systemDark = useMediaPreference('(prefers-color-scheme: dark)');
+  const reducedMotion = useMediaPreference('(prefers-reduced-motion: reduce)');
+  const dark = appearance === 'dark' || (appearance === 'system' && systemDark);
   const [status, setStatus] = useState('');
   const [checking, setChecking] = useState(false);
 
@@ -29,16 +34,18 @@ export function App() {
   }
 
   return (
-    <AppFrame className={`appearance-${appearance}`}>
+    <AppFrame
+      className={`appearance-${appearance} theme-${dark ? 'dark' : 'light'}`}
+    >
+      <AuraBackground dark={dark} animated={animated} />
       <a className="skip-link" href="#workspace">
         Skip to content
       </a>
-      <aside className="sidebar">
+      <header className="glass-header">
         <div className="brand">
           <img src={mark} alt="" aria-hidden="true" />
           <span>mochi</span>
         </div>
-        <p className="brand-caption">A little more understanding.</p>
         <nav aria-label="Main navigation">
           <button
             aria-current={page === 'sessions' ? 'page' : undefined}
@@ -53,18 +60,13 @@ export function App() {
             <span aria-hidden="true">⚙</span> Settings
           </button>
         </nav>
-        <div className="sidebar-note">
+        <div className="header-status">
           <span className="privacy-dot" aria-hidden="true" /> Local by default
-          <p>
-            Your coding stays on this Mac until you approve an analysis request.
-          </p>
         </div>
-        <span className="build-label">Personal CLI preview · 0.1.0</span>
-      </aside>
+      </header>
       <div className="workspace" id="workspace" tabIndex={-1}>
         <header className="workspace-header">
           <div>
-            <p className="eyebrow">Your learning companion</p>
             <h1>{page === 'sessions' ? 'Sessions' : 'Settings'}</h1>
           </div>
           <span className="local-badge">
@@ -82,12 +84,6 @@ export function App() {
         </div>
         {page === 'settings' && (
           <div className="settings-layout">
-            <div className="settings-intro">
-              <h2>Make yourself at home.</h2>
-              <p>
-                Your key, your projects, your choice of what leaves this Mac.
-              </p>
-            </div>
             <section className="panel" aria-labelledby="appearance-title">
               <h2 id="appearance-title">Appearance</h2>
               <fieldset className="appearance-options">
@@ -105,9 +101,19 @@ export function App() {
                   </label>
                 ))}
               </fieldset>
+              <label className="checkbox background-toggle">
+                <input
+                  type="checkbox"
+                  checked={animated && !reducedMotion}
+                  disabled={reducedMotion}
+                  onChange={(event) => setAnimated(event.target.checked)}
+                />
+                Animated background
+              </label>
               <p className="muted">
-                Applies while this window is open. System follows your Mac’s
-                appearance.
+                {reducedMotion
+                  ? 'Animation is off to follow your Mac’s Reduce Motion setting.'
+                  : 'Appearance changes apply to this window.'}
               </p>
             </section>
             {native ? (
@@ -123,8 +129,9 @@ export function App() {
               </section>
             )}
             {native && <CompanionControls />}
-            <section className="panel" aria-labelledby="about-title">
-              <h2 id="about-title">About this preview</h2>
+            <details className="panel about-preview">
+              <summary id="about-title">About & diagnostics</summary>
+              <p className="muted">Personal CLI preview · 0.1.0</p>
               <p>
                 This personal Codex CLI build captures approved work locally and
                 offers explanations with a short self-check. Full lessons,
@@ -142,7 +149,7 @@ export function App() {
                 {checking ? 'Checking…' : 'Check desktop connection'}
               </button>
               <p role="status">{status}</p>
-            </section>
+            </details>
           </div>
         )}
       </div>
