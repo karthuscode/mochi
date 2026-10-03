@@ -2,6 +2,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
         tauri_build::AppManifest::new().commands(&[
             "get_app_info",
+            "pick_project_folder",
+            "get_home_preferences",
+            "save_home_preferences",
             "get_companion_trial",
             "set_companion_visible",
             "open_mochi",

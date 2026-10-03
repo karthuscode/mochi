@@ -120,3 +120,14 @@ Migrations 0001–0003 are unchanged. 0004 adds `capture_episodes` (source key, 
 Current version-1 learning references are opaque `event:<uuid>` or `code:<role>:<sanitized-hash>` IDs resolved against the exact input manifest. Code evidence records a sanitized immutable excerpt/hash, relative path, snapshot time, first line and truncation. These IDs are not provider thread IDs or live working-tree references. Persisted domain Git context additionally supports `FinalOnly { after, baselineReason }`; it never fabricates a before snapshot.
 
 Analysis runs retain safe authorization metadata, not provider payload logs; the sanitized input/evidence copies exist only in a published validated document. Startup cancels unfinished runs rather than automatically resending. The internal publication includes explanation, questions, delayed variants and exposure, without mini challenge/knowledge/review or full ready status. Automatic 30-day partial-context expiry and export/reset UI are not implemented at this checkpoint; explicit ingress cutoff/checkpoint primitives and deletion are available. [Current limits and evidence](../implementation/INTERNAL_CLI_MVP.md).
+
+## Non-authorizing Home preference - 2026-10-03
+
+The bounded Bento task stores `home-preferences-v1.json` separately from SQLite:
+`schemaVersion: 1`, `homeReached: boolean`, `projectId: UUID | null`. Only an
+approved, retained project UUID may be written; loading reconciles it with the
+current project list and discards a deleted/unknown selection. This is display
+state, never consent, capture evidence or connection proof. It contains no
+folder paths or credentials, uses private atomic Rust storage, and requires no
+database migration. New folder/alias drafts are memory-only and leave this file
+unchanged. See [Bento Home evidence](../implementation/BENTO_HOME.md).

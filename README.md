@@ -188,3 +188,13 @@ For an isolated native visual preview, run `MOCHI_COMPANION_PREVIEW=1 pnpm deskt
 Technical identifiers and documents use English; initial product UI is English. Localization is deferred. Each specialized spec names its authority. Keep shared terms, limits, statuses, consent, and brief dependencies aligned. Record changes in [DECISIONS.md](docs/product/DECISIONS.md), update affected documents in the same change, and run the documentation checks in [VALIDATION_PLAN.md](docs/implementation/VALIDATION_PLAN.md).
 
 Desktop/Codex-only decisions supersede earlier website, multi-provider and percentage-based knowledge sketches. Concrete defaults added to make this pack implementable are distinguished in the decision register.
+
+## Bento Home and DotField checkpoint - 2026-10-03
+
+The main window now preserves the Welcome greeting and four manual introduction
+slides, then opens four [Bento Home](docs/implementation/BENTO_HOME.md) cards.
+Native folder selection routes to the existing separate Sessions approvals.
+Home reached and the last approved project UUID survive restart; replay stays
+available. A shared [DotField background](docs/implementation/DOT_FIELD_TRIAL.md)
+replaces the earlier Liquid Ether on every main-window view. These bounded UI
+changes grant no capture or analysis permission and certify no new source.

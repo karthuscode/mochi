@@ -3,10 +3,13 @@ import { mockIPC } from '@tauri-apps/api/mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { localCapture } from './native/local-capture';
+import { homeNative, defaultHomePreferences } from './native/home';
 import { learning } from './native/learning';
 
-vi.mock('./background/LiquidEther', () => ({
-  LiquidEther: () => <div data-testid="liquid-ether" />,
+vi.mock('./background/DotField', () => ({
+  DotField: ({ animated }: { animated: boolean }) => (
+    <div data-testid="dot-field" data-animated={animated} />
+  ),
 }));
 
 vi.mock('./native/local-capture', () => ({
@@ -15,7 +18,16 @@ vi.mock('./native/local-capture', () => ({
     status: vi.fn(),
     pauseAll: vi.fn(),
     approve: vi.fn(),
+    sessions: vi.fn(),
   },
+}));
+vi.mock('./native/home', () => ({
+  defaultHomePreferences: {
+    schemaVersion: 1,
+    homeReached: false,
+    projectId: null,
+  },
+  homeNative: { read: vi.fn(), save: vi.fn(), pickFolder: vi.fn() },
 }));
 vi.mock('./native/learning', () => ({
   learning: { status: vi.fn(), permission: vi.fn(), send: vi.fn() },
@@ -23,7 +35,11 @@ vi.mock('./native/learning', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(homeNative.read).mockResolvedValue(defaultHomePreferences);
+  vi.mocked(homeNative.save).mockResolvedValue();
+  vi.mocked(homeNative.pickFolder).mockResolvedValue('/synthetic/example');
   vi.mocked(localCapture.projects).mockResolvedValue([]);
+  vi.mocked(localCapture.sessions).mockResolvedValue({ items: [], next: null });
   vi.mocked(localCapture.status).mockResolvedValue({
     schemaVersion: 1,
     message: 'Local capture ready.',
@@ -39,28 +55,111 @@ beforeEach(() => {
   });
 });
 
-function settings() {
+async function enter() {
+  const start = await screen.findByRole('button', { name: /Get Started/ });
+  fireEvent.click(start);
+}
+async function guide() {
+  await enter();
+  const skip = screen.queryByRole('button', { name: 'Skip tour' });
+  if (skip) fireEvent.click(skip);
+}
+async function settings() {
+  if (!screen.queryByRole('button', { name: 'Settings' })) await enter();
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 }
 
 describe('personal MVP shell', () => {
+  it('keeps a return route when startup storage fails and Settings is opened', async () => {
+    vi.stubGlobal('isTauri', true);
+    vi.mocked(localCapture.projects).mockRejectedValue(
+      new Error('private storage diagnostic'),
+    );
+    render(<App />);
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Local storage is unavailable.',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Open settings' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Learning settings' }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Home' }));
+    expect(
+      screen.getByRole('button', { name: 'Retry local data' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByText('private storage diagnostic'),
+    ).not.toBeInTheDocument();
+  });
+  it('prefills and focuses native folder approval, keeps it unchecked, then clears the completed Home draft', async () => {
+    vi.stubGlobal('isTauri', true);
+    const approved = {
+      id: '10000000-0000-4000-8000-000000000001',
+      name: 'Example',
+      root: '/canonical/example',
+      tracking: false,
+      policyRevision: 1,
+    };
+    vi.mocked(localCapture.approve).mockImplementation(async () => {
+      vi.mocked(localCapture.projects).mockResolvedValue([approved]);
+      return approved;
+    });
+    render(<App />);
+    await guide();
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Choose a project folder' })[0]!,
+    );
+    await screen.findByText('/synthetic/example');
+    fireEvent.click(screen.getByRole('radio', { name: /Codex CLI/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Review project access' }),
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText('Project alias')).toHaveFocus(),
+    );
+    expect(screen.getByLabelText('Project folder')).toHaveValue(
+      '/synthetic/example',
+    );
+    expect(screen.getByLabelText('Project alias')).toHaveValue('example');
+    const consent = screen.getByRole('checkbox', {
+      name: /I approve this folder/,
+    });
+    expect(consent).not.toBeChecked();
+    expect(
+      screen.getByRole('button', { name: 'Approve folder' }),
+    ).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Home' }));
+    expect(screen.getByLabelText('Project name')).toHaveValue('example');
+    fireEvent.click(screen.getByRole('button', { name: 'Sessions' }));
+    fireEvent.click(consent);
+    fireEvent.click(screen.getByRole('button', { name: 'Approve folder' }));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Project')).toHaveValue(approved.id),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Home' }));
+    expect(await screen.findByText('Review your connection.')).toBeVisible();
+    expect(screen.getByLabelText('Learning project')).toHaveValue(approved.id);
+    expect(screen.queryByLabelText('Project name')).not.toBeInTheDocument();
+    expect(learning.permission).not.toHaveBeenCalled();
+    expect(learning.send).not.toHaveBeenCalled();
+  });
   it('uses the selected mark with lowercase branding and labelled browser isolation', async () => {
     render(<App />);
     expect(screen.getByRole('main')).toContainElement(
-      screen.getByRole('heading', { name: 'Sessions', level: 1 }),
+      screen.getByRole('heading', { name: 'Welcome', level: 1 }),
     );
     expect(screen.getByText('mochi')).toBeVisible();
     expect(screen.getByText(/Appearance preview only/)).toBeVisible();
-    fireEvent.click(
-      screen.getByRole('link', { name: /Connect your first project/ }),
-    );
+    await guide();
+    fireEvent.click(screen.getByRole('button', { name: 'Sessions' }));
+    fireEvent.click(screen.getByText('Approve a project folder'));
     expect(
       screen.getByRole('button', { name: 'Approve folder' }),
     ).toBeDisabled();
     expect(
       screen.queryByRole('button', { name: 'Pause all capture' }),
     ).not.toBeInTheDocument();
-    settings();
+    await settings();
     fireEvent.click(screen.getByText('About & diagnostics'));
     expect(
       screen.getByRole('button', { name: 'Check desktop connection' }),
@@ -74,13 +173,18 @@ describe('personal MVP shell', () => {
     vi.stubGlobal('isTauri', true);
     render(<App />);
     await waitFor(() => expect(localCapture.projects).toHaveBeenCalled());
-    fireEvent.click(
-      screen.getByRole('link', { name: /Connect your first project/ }),
-    );
+    await guide();
+    fireEvent.click(screen.getByRole('button', { name: 'Sessions' }));
+    fireEvent.click(screen.getByText('Approve a project folder'));
     fireEvent.change(screen.getByLabelText('Project alias'), {
       target: { value: 'Synthetic project' },
     });
-    settings();
+    fireEvent.click(screen.getByRole('button', { name: 'Home' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Replay introduction' }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Slide 2/ }));
+    await settings();
     expect(await screen.findByText('Remote analysis is off.')).toBeVisible();
     expect(
       screen.getByRole('checkbox', { name: /Allow remote analysis controls/ }),
@@ -95,15 +199,20 @@ describe('personal MVP shell', () => {
     expect(localCapture.approve).not.toHaveBeenCalled();
     expect(learning.permission).not.toHaveBeenCalled();
     expect(learning.send).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Home' }));
+    expect(screen.getByRole('button', { name: /Slide 2/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
-  it('changes only window appearance and retains the choice across navigation', () => {
+  it('changes only window appearance and retains the choice across navigation', async () => {
     render(<App />);
-    settings();
+    await settings();
     fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
     expect(screen.getByRole('main')).toHaveClass('appearance-light');
     fireEvent.click(screen.getByRole('button', { name: 'Sessions' }));
-    settings();
+    await settings();
     expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
     fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
     expect(screen.getByRole('main')).toHaveClass('appearance-dark');
@@ -111,18 +220,24 @@ describe('personal MVP shell', () => {
     expect(learning.send).not.toHaveBeenCalled();
   });
 
-  it('keeps the background switch across navigation without native calls', () => {
+  it('keeps the background switch across navigation without native calls', async () => {
     render(<App />);
-    expect(screen.getByTestId('liquid-ether')).toBeInTheDocument();
-    settings();
+    expect(screen.getByTestId('dot-field')).toHaveAttribute(
+      'data-animated',
+      'true',
+    );
+    await settings();
     const toggle = screen.getByRole('checkbox', {
       name: 'Animated background',
     });
     expect(toggle).toBeChecked();
     fireEvent.click(toggle);
-    expect(screen.queryByTestId('liquid-ether')).not.toBeInTheDocument();
+    expect(screen.getByTestId('dot-field')).toHaveAttribute(
+      'data-animated',
+      'false',
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Sessions' }));
-    settings();
+    await settings();
     expect(
       screen.getByRole('checkbox', { name: 'Animated background' }),
     ).not.toBeChecked();
@@ -130,7 +245,7 @@ describe('personal MVP shell', () => {
     expect(learning.send).not.toHaveBeenCalled();
   });
 
-  it('honors reduced motion even with the animation preference enabled', () => {
+  it('honors reduced motion even with the animation preference enabled', async () => {
     vi.stubGlobal(
       'matchMedia',
       vi.fn((query: string) => ({
@@ -141,15 +256,18 @@ describe('personal MVP shell', () => {
       })),
     );
     render(<App />);
-    settings();
-    expect(screen.queryByTestId('liquid-ether')).not.toBeInTheDocument();
+    await settings();
+    expect(screen.getByTestId('dot-field')).toHaveAttribute(
+      'data-animated',
+      'false',
+    );
     expect(
       screen.getByRole('checkbox', { name: 'Animated background' }),
     ).toBeDisabled();
     expect(screen.getByText(/Reduce Motion setting/)).toBeVisible();
   });
 
-  it('resolves system dark appearance and allows a light override', () => {
+  it('resolves system dark appearance and allows a light override', async () => {
     vi.stubGlobal(
       'matchMedia',
       vi.fn((query: string) => ({
@@ -161,7 +279,7 @@ describe('personal MVP shell', () => {
     );
     render(<App />);
     expect(screen.getByRole('main')).toHaveClass('theme-dark');
-    settings();
+    await settings();
     fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
     expect(screen.getByRole('main')).toHaveClass('theme-light');
   });
@@ -173,7 +291,7 @@ describe('personal MVP shell', () => {
       return { schemaVersion: 1, name: 'Mochi', version: '0.1.0' };
     });
     render(<App />);
-    settings();
+    await settings();
     fireEvent.click(screen.getByText('About & diagnostics'));
     fireEvent.click(
       screen.getByRole('button', { name: 'Check desktop connection' }),
@@ -192,7 +310,7 @@ describe('personal MVP shell', () => {
         return { schemaVersion: 2 };
       });
       render(<App />);
-      settings();
+      await settings();
       fireEvent.click(screen.getByText('About & diagnostics'));
       fireEvent.click(
         screen.getByRole('button', { name: 'Check desktop connection' }),

@@ -28,6 +28,7 @@ struct PendingPlan {
 }
 pub struct LocalCapture {
     pub store: SqliteStore,
+    pub(crate) home_preferences: crate::home_preferences::PreferenceStore,
     bridge: CaptureBridge,
     installer: CodexInstaller,
     plans: Mutex<BTreeMap<Uuid, PendingPlan>>,
@@ -153,6 +154,7 @@ impl LocalCapture {
             .map_err(|_| "Integration recovery unavailable.")?;
         let core = Arc::new(Self {
             store,
+            home_preferences: crate::home_preferences::PreferenceStore::new(data),
             bridge,
             installer,
             plans: Mutex::new(BTreeMap::new()),

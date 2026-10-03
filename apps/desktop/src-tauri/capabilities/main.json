@@ -5,6 +5,9 @@
   "windows": ["main"],
   "permissions": [
     "allow-get-app-info",
+    "allow-pick-project-folder",
+    "allow-get-home-preferences",
+    "allow-save-home-preferences",
     "allow-get-companion-trial",
     "allow-set-companion-visible",
     "allow-local-status",

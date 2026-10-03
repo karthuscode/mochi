@@ -54,7 +54,9 @@ export function LearningSettings() {
   }
   return (
     <section className="panel" aria-labelledby="analysis-settings-title">
-      <h2 id="analysis-settings-title">Learning settings</h2>
+      <h2 id="analysis-settings-title" tabIndex={-1}>
+        Learning settings
+      </h2>
       <p>
         OpenAI API usage is billed separately from ChatGPT. Your API key stays
         in macOS Keychain; mochi never reads your Codex credentials.

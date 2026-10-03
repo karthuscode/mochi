@@ -128,3 +128,42 @@ has no IPC, filesystem, credential or network authority. Activity/media-query
 subscriptions govern animation and cleanup independently of capture/analysis;
 CSP and native capabilities remain unchanged. prepare:native supplies debug and
 release helper resources before native tooling, including a fresh CI checkout.
+
+## Bento Home ownership - 2026-10-03
+
+A window-scoped typed `useLocalWorkspace` hook owns approved project selection,
+paginated project/session summaries, native status and latest explanation
+metadata for Home and Sessions. One coalesced refresh runs on entry, selection,
+connection mutation and every three seconds while the main window is active.
+Selection epochs and refresh generations discard late responses, including
+A-to-B-to-A switches. Historical-page navigation keeps its page while latest
+metadata refreshes. Session detail/exact previews/self-check drafts stay in the
+existing mounted Sessions surface; its detail and connection preview
+publication also check the selection epoch.
+
+Targeted navigation carries a project UUID, optional session UUID and an
+approval/connection/session focus target. A folder/alias draft remains in
+window memory and is cleared after successful existing folder approval.
+`pick_project_folder` is a main-window-only command backed by Rust Tauri dialog
+2.7.1 (compatible with pinned Tauri 2.11.5), selecting one directory off the UI
+thread. Cancellation returns null, concurrent dialogs are rejected, and no
+frontend dialog/filesystem permission is granted. The dependency serves only
+the native picker; see [official API](https://v2.tauri.app/plugin/dialog/).
+
+`home-preferences-v1.json` is Rust-owned schema version 1, containing only
+`homeReached` and optional approved `projectId` plus `schemaVersion`. The save
+command checks the project against current authoritative storage under the
+existing operation lock. Bounded strict reads and private atomic rename/sync
+writes use the app-owned directory; no SQLite migration or domain/consent
+transition is introduced. See [implementation evidence](../implementation/BENTO_HOME.md).
+
+## DotField presentation amendment - 2026-10-03
+
+The shared main-window decorative boundary now uses a dependency-free Canvas 2D
+[DotField adaptation](../implementation/DOT_FIELD_TRIAL.md), replacing the active
+Liquid Ether renderer. One instance spans every main route, including Welcome
+and introduction. Window activity and media preferences govern resource
+allocation; pointer-triggered work stops at rest and disposes on pause/unmount.
+CSS provides static dots when animation is unavailable. No IPC, storage,
+capability, CSP, learning, capture or domain contract changes. The retained
+Liquid Ether/Three.js code is outside the active main-window bundle.

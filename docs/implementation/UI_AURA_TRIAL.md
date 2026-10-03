@@ -133,3 +133,10 @@ release test bundle contains these solid-base assets.
 | Light | Dark |
 | --- | --- |
 | ![Solid light base](assets/ui-solid-light.jpg) | ![Solid dark base](assets/ui-solid-dark.jpg) |
+
+## Superseding background trial - 2026-10-03
+
+The subsequent user-assigned [DotField trial](DOT_FIELD_TRIAL.md) replaces the
+active Liquid Ether layer on every main-window route. The preceding screenshots
+and WebGL evidence record this earlier checkpoint. Static dots now remain when
+Animated background is off; system reduced motion disables cursor deformation.

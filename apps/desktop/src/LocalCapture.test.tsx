@@ -1,8 +1,17 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocalCapture } from './LocalCapture';
 import { localCapture } from './native/local-capture';
 import type { ProjectView, SessionList } from './native/local-capture';
+vi.mock('./Learning', () => ({
+  LearningPanel: () => <p>Internal explanation preview</p>,
+}));
 
 vi.mock('./native/local-capture', () => ({
   localCapture: {
@@ -13,6 +22,7 @@ vi.mock('./native/local-capture', () => ({
     apply: vi.fn(),
     tracking: vi.fn(),
     deleteProject: vi.fn(),
+    detail: vi.fn(),
   },
 }));
 const first: ProjectView = {
@@ -53,7 +63,7 @@ beforeEach(() => {
     spoolEvictionCount: 0,
     remoteAnalysisEnabled: false,
   });
-  vi.mocked(localCapture.sessions).mockResolvedValue(page);
+  vi.mocked(localCapture.sessions).mockReset().mockResolvedValue(page);
   vi.mocked(localCapture.preview).mockResolvedValue({
     schemaVersion: 1,
     planId: first.id,
@@ -67,6 +77,14 @@ beforeEach(() => {
   });
   vi.mocked(localCapture.apply).mockResolvedValue();
   vi.mocked(localCapture.deleteProject).mockResolvedValue();
+  vi.mocked(localCapture.detail).mockResolvedValue({
+    session: page.items[0]!,
+    events: [],
+    eventCount: 0,
+    nextSequence: null,
+    code: [],
+    gitNotice: 'No code fixture',
+  });
 });
 async function selectFirst() {
   await screen.findByRole('option', { name: first.name });
@@ -76,6 +94,53 @@ async function selectFirst() {
   await screen.findByText('interrupted · partial coverage');
 }
 describe('local capture interface boundaries', () => {
+  it('opens and focuses a targeted session after detail rendering, including a repeated request', async () => {
+    const { rerender } = render(<LocalCapture />);
+    await selectFirst();
+    const navigation = {
+      token: 1,
+      projectId: first.id,
+      sessionId: page.items[0]!.id,
+      target: 'session' as const,
+    };
+    rerender(<LocalCapture navigation={navigation} />);
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Observed session' }),
+      ).toHaveFocus(),
+    );
+    screen.getByLabelText('Project', { exact: true }).focus();
+    rerender(<LocalCapture navigation={{ ...navigation, token: 2 }} />);
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Observed session' }),
+      ).toHaveFocus(),
+    );
+  });
+  it('cannot publish an old session page after switching away and back', async () => {
+    render(<LocalCapture />);
+    await selectFirst();
+    let finish!: (value: SessionList) => void;
+    vi.mocked(localCapture.sessions).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Latest sessions' }));
+    fireEvent.change(screen.getByLabelText('Project', { exact: true }), {
+      target: { value: second.id },
+    });
+    fireEvent.change(screen.getByLabelText('Project', { exact: true }), {
+      target: { value: first.id },
+    });
+    await act(async () =>
+      finish({
+        items: [{ ...page.items[0]!, captureState: 'old unsafe page' }],
+        next: null,
+      }),
+    );
+    expect(screen.queryByText(/old unsafe page/)).not.toBeInTheDocument();
+  });
   it('keeps an exact connection disabled until its independent local consent is checked', async () => {
     render(<LocalCapture />);
     await selectFirst();

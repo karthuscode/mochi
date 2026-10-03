@@ -47,3 +47,15 @@ Use parameterized SQL, explicit migrations, bounded queues, cancellable jobs, sa
 - Report changes, validation, and material limitations candidly. Never label a stub or unsupported provider event as complete.
 
 Do not commit user data, API keys, configuration backups, model payload logs, or real capture fixtures. Do not push, publish, sign, deploy, or modify external accounts unless requested. Routine reversible implementation and verification within an authorized brief do not require repeated approval.
+
+## Current Home and background checkpoint - 2026-10-03
+
+The assigned [Bento Home](docs/implementation/BENTO_HOME.md) and
+[DotField trial](docs/implementation/DOT_FIELD_TRIAL.md) supersede the earlier
+entry/background presentation. Read their bounded briefs for further work.
+Welcome and four manual slides lead to project selection; Home/Sessions share
+typed reads and preserve drafts. Native folder selection grants no authority.
+Private UI preferences remember Home reached and the approved project UUID.
+DotField is a shared Canvas 2D decoration with static reduced-motion fallback.
+Desktop, Claude Code and Cowork choices remain unavailable; no new adapter or
+live-model gate is accepted by this UI checkpoint.

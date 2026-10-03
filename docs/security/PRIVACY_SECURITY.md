@@ -116,3 +116,20 @@ Brief 05 file/path policy, Brief 06 shared redaction, and Brief 07 read-only int
 The current desktop has root approval, consent-controlled connection/tracking/pause, session/project deletion, Keychain credential set/delete, run-local remote permission and an exact short-lived preview for each generation or advisory grading request. Startup grants nothing and never resends analysis. Remote jobs recheck input/policy/consent before each attempt and before transactional publication; changed exclusions invalidate previews. Revocation disables the helper policy before updating storage; failures remain disabled. Session deletion tombstones/deletes owned ingress and cascades its explanation/questions/answers. The user's project, Codex transcripts and unrelated hooks/Keychain entries remain outside deletion scope.
 
 The bounded analysis bundle reuses path/redaction policy and omits raw command/tool output without reliable file provenance. Selected prompts may still contain proprietary material; preview/decline remains essential. Keys are sent only to the fixed HTTPS OpenAI endpoint after exact authorization; `store:false` does not remove normal provider abuse-monitoring retention. Local cancellation cannot recall transmitted data. No project auto-send, export/reset UI, notifications/login startup or automatic context-expiry scheduler exists in this personal checkpoint. Local content is protected by owner filesystem permissions rather than encryption, and deletion is not forensic erasure. See [trial and validation limits](../implementation/INTERNAL_CLI_MVP.md).
+
+## Bento Home data handling - 2026-10-03
+
+The single-folder dialog returns an in-memory path to the main window. Selection
+never approves project scope or tracking; the existing canonical-root approval,
+exact connection preview, manual Codex trust and independent remote send consent
+remain authoritative. Home source choices cannot enable unverified adapters. No
+automatic filesystem/session discovery or new outbound surface is introduced.
+
+Home's separate non-authorizing preference file contains only schema version,
+Home-reached boolean and last approved UUID. It accepts no path, key, consent or
+connection-success field. Files are owner-only (0600), in the existing private
+app directory (0700), with a 512-byte bound, strict schema and atomic temporary
+write/sync/rename. Symlinks, hardlinks, non-regular and public files are rejected;
+errors omit diagnostics. Preference failure leaves usage available and explains
+that selection may reset. Unknown/deleted UUIDs never restore project authority.
+SQLite, tracking policy, Keychain and retention contracts are unchanged.

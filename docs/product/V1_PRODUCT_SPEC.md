@@ -62,3 +62,10 @@ Release targets: sanitized capture remains durable when the window is closed; UI
 ## Non-goals
 
 See [V1_SCOPE.md](V1_SCOPE.md). Mochi never writes the user's project as part of learning, executes challenge code, replaces Codex, or interrupts a coding session with a required quiz.
+
+The separately assigned [Bento Home checkpoint](../implementation/BENTO_HOME.md)
+now makes the post-introduction Home a project-entry surface: native folder
+selection, explicit tool choice and targeted existing Sessions approval, with
+one state-derived next action. It remembers Home reached and last approved UUID
+through a private non-authorizing preference; it does not change capture/source
+support, learning evidence rules or live acceptance gates.

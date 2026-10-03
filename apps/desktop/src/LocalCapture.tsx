@@ -1,32 +1,50 @@
 import { LearningPanel } from './Learning';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocalWorkspace } from './useLocalWorkspace';
+import type { LocalWorkspace, SessionNavigation } from './useLocalWorkspace';
 import { localCapture } from './native/local-capture';
-import type {
-  InstallPreview,
-  ProjectView,
-  SessionDetail,
-  SessionList,
-} from './native/local-capture';
+import type { InstallPreview, SessionDetail } from './native/local-capture';
 
-import character from '../../../docs/design/assets/mochi/final/character-idle.png';
-
-export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
+export function LocalCapture({
+  enabled = true,
+  approvalRequest = 0,
+  workspace: shared,
+  navigation,
+}: {
+  enabled?: boolean;
+  approvalRequest?: number;
+  workspace?: LocalWorkspace;
+  navigation?: SessionNavigation | null;
+}) {
   const deletePrompt = useRef<HTMLElement>(null);
   const approval = useRef<HTMLDetailsElement>(null);
-  const browsingOlder = useRef(false);
+  useEffect(() => {
+    if (approvalRequest > 0 && approval.current) {
+      approval.current.open = true;
+      approval.current.querySelector('summary')?.focus();
+    }
+  }, [approvalRequest]);
+  const ownWorkspace = useLocalWorkspace(enabled && !shared, true, false);
+  const workspace = shared ?? ownWorkspace;
+  const {
+    projects,
+    projectId,
+    selectProject: setProjectId,
+    sessions,
+    setSessions,
+    loaded,
+    refresh,
+    setBrowsingOlder,
+  } = workspace;
+  const connectionFocus = useRef<HTMLButtonElement>(null);
+  const sessionFocus = useRef<HTMLHeadingElement>(null);
+  const [focusSessionId, setFocusSessionId] = useState<string | null>(null);
   const busyNow = useRef(false);
-  const [loaded, setLoaded] = useState(!enabled);
-  const [projects, setProjects] = useState<ProjectView[]>([]);
-  const [projectId, setProjectId] = useState('');
   const [path, setPath] = useState('');
   const [name, setName] = useState('');
   const [rootConsent, setRootConsent] = useState(false);
   const [captureConsent, setCaptureConsent] = useState(false);
   const [preview, setPreview] = useState<InstallPreview | null>(null);
-  const [sessions, setSessions] = useState<SessionList>({
-    items: [],
-    next: null,
-  });
   const [detail, setDetail] = useState<SessionDetail | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -36,70 +54,106 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
     if (deleting) deletePrompt.current?.focus();
   }, [deleting]);
   const project = projects.find((p) => p.id === projectId);
-  const refresh = useCallback(async () => {
-    const rows = await localCapture.projects();
-    setProjects(rows);
-    setLoaded(true);
-    const state = await localCapture.status();
-    setStatus(
-      state.spoolEvictionCount > 0
-        ? `${state.message} Capture warning: ${state.spoolEvictionCount} queued records expired or exceeded local limits. Session coverage may be incomplete.`
-        : state.message,
-    );
-  }, []);
+  const captureStatus = workspace.status;
+  const visibleStatus =
+    status ||
+    (captureStatus
+      ? `${captureStatus.message}${
+          captureStatus.spoolEvictionCount > 0
+            ? ` Capture warning: ${captureStatus.spoolEvictionCount} queued records expired or exceeded local limits. Session coverage may be incomplete.`
+            : ''
+        }`
+      : '');
+  const visibleError = error || workspace.error;
+  const [selection, setSelection] = useState(projectId);
+  if (selection !== projectId) {
+    setSelection(projectId);
+    setCaptureConsent(false);
+    setPreview(null);
+    setDetail(null);
+    setFocusSessionId(null);
+    setDeleting(null);
+    setStatus('');
+    setError('');
+  }
+  async function loadDetail(
+    sessionId: string,
+    afterSequence: number | null = null,
+  ) {
+    const token = workspace.selectionToken();
+    const result = await localCapture.detail(sessionId, afterSequence);
+    const current =
+      workspace.isCurrentSelection(token) &&
+      workspace.isSelectedProject(projectId);
+    if (current) setDetail(result);
+    return current;
+  }
   useEffect(() => {
-    if (!enabled) return;
-    let live = true;
+    if (
+      navigation?.target === 'session' &&
+      focusSessionId &&
+      detail?.session.id === focusSessionId
+    )
+      sessionFocus.current?.focus();
+  }, [
+    focusSessionId,
+    detail?.session.id,
+    navigation?.target,
+    navigation?.token,
+  ]);
+  useEffect(() => {
+    if (!navigation || !enabled) return;
     const timer = setTimeout(() => {
-      void refresh().catch(() => {
-        if (live)
-          setError(
-            'Local storage is unavailable. Restart mochi and check its permissions.',
-          );
-      });
-    }, 0);
-    return () => {
-      live = false;
-      clearTimeout(timer);
-    };
-  }, [enabled, refresh]);
-  useEffect(() => {
-    if (!enabled || !projectId) return;
-    let live = true;
-    const update = async () => {
-      try {
-        if (browsingOlder.current) return;
-        const page = await localCapture.sessions(projectId);
-        if (live) setSessions(page);
-      } catch {
-        if (live)
-          setError(
-            'Sessions are unavailable. Retry after checking local storage.',
-          );
+      if (navigation.target === 'approval') {
+        setError('');
+        setStatus('');
+        if (navigation.draft) {
+          setPath(navigation.draft.path);
+          setName(navigation.draft.name);
+          setRootConsent(false);
+          setCaptureConsent(false);
+          setPreview(null);
+        }
+        if (approval.current) {
+          approval.current.open = true;
+          approval.current.querySelector('input')?.focus();
+        }
+      } else if (navigation.projectId === projectId) {
+        if (navigation.target === 'connection')
+          connectionFocus.current?.focus();
+        if (navigation.sessionId) {
+          const token = workspace.selectionToken();
+          void loadDetail(navigation.sessionId)
+            .then((current) => {
+              if (current) setFocusSessionId(navigation.sessionId ?? null);
+            })
+            .catch(() => {
+              if (workspace.isCurrentSelection(token))
+                setError(
+                  'The session is unavailable. Retry from the session list.',
+                );
+            });
+        }
       }
-    };
-    void update();
-    const timer = setInterval(() => {
-      void update();
-      void refresh().catch(() => {});
-    }, 3000);
-    return () => {
-      live = false;
-      clearInterval(timer);
-    };
-  }, [enabled, projectId, refresh]);
-  async function action(run: () => Promise<void>) {
+    }, 0);
+    return () => clearTimeout(timer);
+    // Navigation tokens represent deliberate one-time focus requests.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation?.token, enabled]);
+  async function action(run: () => Promise<unknown>) {
     if (!enabled || busyNow.current) return;
     busyNow.current = true;
     setBusy(true);
     setError('');
+    const token = workspace.selectionToken();
     try {
       await run();
       await refresh();
     } catch {
-      setError(
-        'The action could not be completed safely. Check project permissions, Codex CLI 0.151.0 and existing hooks, then retry.',
-      );
+      if (workspace.isCurrentSelection(token))
+        setError(
+          'The action could not be completed safely. Check project permissions, Codex CLI 0.151.0 and existing hooks, then retry.',
+        );
     } finally {
       busyNow.current = false;
       setBusy(false);
@@ -122,40 +176,30 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
           </button>
         )}
       </div>
-      {!loaded && !error && <p role="status">Loading local projects…</p>}
-      {status && (
+      {!loaded && !visibleError && <p role="status">Loading local projects…</p>}
+      {visibleStatus && (
         <p role="status" className="capture-status">
-          {status}
+          {visibleStatus}
         </p>
       )}
-      {loaded && projects.length === 0 && !error && (
-        <section className="welcome-card" aria-labelledby="welcome-title">
-          <div className="welcome-copy">
-            <h3 id="welcome-title">Understand your next session.</h3>
-            <p>
-              Connect a project, code with Codex, then explore the ideas behind
-              what you built.
-            </p>
-            <a
-              className="primary-link"
-              href="#project-approval"
-              onClick={() => {
-                if (approval.current) approval.current.open = true;
-              }}
-            >
-              Connect your first project <span aria-hidden="true">↗</span>
-            </a>
-          </div>
-          <img
-            src={character}
-            alt="mochi’s orange and graphite companion"
-            className="welcome-character"
-          />
+      {loaded && projects.length === 0 && !visibleError && (
+        <section className="panel" aria-labelledby="empty-sessions-title">
+          <h3 id="empty-sessions-title">No projects connected yet</h3>
+          <p>Connect a project to see your next session here.</p>
+          <a
+            className="primary-link"
+            href="#project-approval"
+            onClick={() => {
+              if (approval.current) approval.current.open = true;
+            }}
+          >
+            Connect your first project <span aria-hidden="true">↗</span>
+          </a>
         </section>
       )}
-      {error && (
+      {visibleError && (
         <p role="alert" className="error">
-          {error}
+          {visibleError}
         </p>
       )}
       <details
@@ -172,6 +216,7 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
               void action(async () => {
                 const p = await localCapture.approve(path, name);
                 setProjectId(p.id);
+                workspace.setFolderDraft(null);
                 setPath('');
                 setName('');
                 setRootConsent(false);
@@ -219,7 +264,7 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
             disabled={busy || !enabled}
             value={projectId}
             onChange={(e) => {
-              browsingOlder.current = false;
+              setBrowsingOlder(false);
               setProjectId(e.target.value);
               setSessions({ items: [], next: null });
               setCaptureConsent(false);
@@ -249,11 +294,18 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
             </p>
             <div className="actions">
               <button
+                ref={connectionFocus}
                 disabled={busy || !enabled}
                 onClick={() =>
                   void action(async () => {
                     setCaptureConsent(false);
-                    setPreview(await localCapture.preview(project.id));
+                    const token = workspace.selectionToken();
+                    const next = await localCapture.preview(project.id);
+                    if (
+                      workspace.isCurrentSelection(token) &&
+                      workspace.isSelectedProject(project.id)
+                    )
+                      setPreview(next);
                   })
                 }
               >
@@ -285,9 +337,15 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
                 <button
                   disabled={busy || !enabled}
                   onClick={() =>
-                    void action(async () =>
-                      setPreview(await localCapture.preview(project.id, true)),
-                    )
+                    void action(async () => {
+                      const token = workspace.selectionToken();
+                      const next = await localCapture.preview(project.id, true);
+                      if (
+                        workspace.isCurrentSelection(token) &&
+                        workspace.isSelectedProject(project.id)
+                      )
+                        setPreview(next);
+                    })
                   }
                 >
                   Review disconnect
@@ -343,7 +401,9 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
               }
               onClick={() =>
                 void action(async () => {
+                  const token = workspace.selectionToken();
                   await localCapture.apply(preview.planId, captureConsent);
+                  if (!workspace.isCurrentSelection(token)) return;
                   setPreview(null);
                   setStatus(
                     'Connection applied. Review the mochi hooks in Codex /hooks before coding.',
@@ -374,11 +434,7 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
                   <li key={s.id}>
                     <button
                       aria-pressed={detail?.session.id === s.id}
-                      onClick={() =>
-                        void action(async () =>
-                          setDetail(await localCapture.detail(s.id)),
-                        )
-                      }
+                      onClick={() => void action(async () => loadDetail(s.id))}
                     >
                       <time>{new Date(s.startedAt).toLocaleString()}</time>
                       <span>
@@ -394,8 +450,10 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
                 disabled={busy || !enabled}
                 onClick={() =>
                   void action(async () => {
-                    browsingOlder.current = false;
-                    setSessions(await localCapture.sessions(project.id));
+                    const token = workspace.selectionToken();
+                    setBrowsingOlder(false);
+                    const page = await localCapture.sessions(project.id);
+                    if (workspace.isCurrentSelection(token)) setSessions(page);
                   })
                 }
               >
@@ -406,10 +464,14 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
                   disabled={busy || !enabled}
                   onClick={() =>
                     void action(async () => {
-                      browsingOlder.current = true;
-                      setSessions(
-                        await localCapture.sessions(project.id, sessions.next),
+                      const token = workspace.selectionToken();
+                      setBrowsingOlder(true);
+                      const page = await localCapture.sessions(
+                        project.id,
+                        sessions.next,
                       );
+                      if (workspace.isCurrentSelection(token))
+                        setSessions(page);
                     })
                   }
                 >
@@ -430,7 +492,9 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
           )}
           {detail && (
             <section className="panel" aria-labelledby="session-title">
-              <h3 id="session-title">Observed session</h3>
+              <h3 id="session-title" ref={sessionFocus} tabIndex={-1}>
+                Observed session
+              </h3>
               <p>
                 {detail.session.captureState} · {detail.session.coverage}{' '}
                 coverage · revision {detail.session.revision}
@@ -463,7 +527,7 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
                   onClick={() =>
                     void action(async () => {
                       await localCapture.finish(detail.session.id);
-                      setDetail(await localCapture.detail(detail.session.id));
+                      loadDetail(detail.session.id);
                     })
                   }
                 >
@@ -472,9 +536,7 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
                 <button
                   disabled={busy || !enabled}
                   onClick={() =>
-                    void action(async () =>
-                      setDetail(await localCapture.detail(detail.session.id)),
-                    )
+                    void action(async () => loadDetail(detail.session.id))
                   }
                 >
                   Refresh details
@@ -517,9 +579,7 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
                 <div className="actions">
                   <button
                     onClick={() =>
-                      void action(async () =>
-                        setDetail(await localCapture.detail(detail.session.id)),
-                      )
+                      void action(async () => loadDetail(detail.session.id))
                     }
                   >
                     First events
@@ -528,12 +588,7 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
                     <button
                       onClick={() =>
                         void action(async () =>
-                          setDetail(
-                            await localCapture.detail(
-                              detail.session.id,
-                              detail.nextSequence,
-                            ),
-                          ),
+                          loadDetail(detail.session.id, detail.nextSequence),
                         )
                       }
                     >
@@ -588,11 +643,14 @@ export function LocalCapture({ enabled = true }: { enabled?: boolean }) {
               disabled={busy || !enabled}
               onClick={() =>
                 void action(async () => {
+                  const token = workspace.selectionToken();
                   if (deleting === 'project' && project) {
                     await localCapture.deleteProject(project.id);
+                    if (!workspace.isCurrentSelection(token)) return;
                     setProjectId('');
                   } else if (detail) {
                     await localCapture.deleteSession(detail.session.id);
+                    if (!workspace.isCurrentSelection(token)) return;
                   }
                   setDetail(null);
                   setDeleting(null);

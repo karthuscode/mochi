@@ -133,3 +133,42 @@ provider metadata and About & diagnostics use disclosures. Existing explanation
 precedes expandable Activity and Code context; references open their source.
 Consent, remote cost/provider retention and deletion limits remain at the action
 boundary. No new route, summary mode or ready-lesson claim.
+
+## Bento Home checkpoint - 2026-10-03
+
+The assigned [Bento Home](../implementation/BENTO_HOME.md) replaces the guided
+trial's post-tour guide; Welcome and the four manual slides remain. Four cards
+show the selected approved project, one next action, first-session guidance or
+latest session, and separately labelled local capture/remote analysis. Native
+folder selection precedes the editable alias and source choice. Only Codex CLI
+continues into the prefilled, focused Sessions approval; its checkbox starts
+off. Codex Desktop, Claude Code and Cowork explain "Not available yet" and offer
+a return/tool change. Home never discovers projects, installs hooks, enables
+tracking or sends analysis.
+
+Next actions derive from typed local state: pick project, choose source, review
+folder, review paused connection, make normal coding progress while waiting for
+the first session, open recorded evidence/analysis prerequisites, then open a
+valid saved internal explanation and self-check. Partial coverage, missing API
+key, remote controls off and stale evidence remain visible; capture enabled
+alone is not a successful-connection claim. The saved introduction and approved
+project selection survive restart; replay stays available. Deleted selection
+returns to the picker. Storage failure has a distinct retry state; preference
+failure is nonblocking with a notice.
+
+Bento keeps Signal/orange/graphite, current themes, visible keyboard focus and
+subtle static/pointer perimeter light. No tilt, magnetic input or particles.
+Cards stack in reading order at narrow widths. Reduced motion and forced colors
+are supported. Browser mode remains labelled and cannot load data or invoke the
+picker/IPC.
+
+## DotField background trial - 2026-10-03
+
+The assigned [DotField trial](../implementation/DOT_FIELD_TRIAL.md) replaces the
+Liquid Ether layer across Welcome, the introduction, Home, Sessions and Settings.
+Small lavender dots sit behind the existing surfaces; cursor movement gives a
+brief bulge and soft glow. Light mode uses lower-contrast muted dots. The
+background is decorative, excluded from accessibility and never handles input.
+Animated background controls cursor motion; switching it off or enabling system
+reduced motion retains static dots. Inactive windows use static dots and forced
+colors hide decoration. Appearance choices still reset with the window.

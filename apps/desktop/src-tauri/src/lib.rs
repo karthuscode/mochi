@@ -3,6 +3,8 @@ mod app_info;
 mod commands;
 mod companion;
 mod credentials;
+mod folder_picker;
+mod home_preferences;
 mod local_capture;
 mod provider;
 
@@ -24,6 +26,8 @@ pub fn run() -> Result<(), tauri::Error> {
         }
     }
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .manage(folder_picker::FolderPicker::default())
         .setup(move |app| {
             companion::setup(app)?;
             if companion_preview {
@@ -60,6 +64,9 @@ pub fn run() -> Result<(), tauri::Error> {
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_app_info,
+            folder_picker::pick_project_folder,
+            commands::get_home_preferences,
+            commands::save_home_preferences,
             companion::get_companion_trial,
             companion::set_companion_visible,
             companion::open_mochi,

@@ -177,6 +177,7 @@ describe('internal learning controls', () => {
       gitNotice: 'Git unavailable.',
     });
     render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Sessions' }));
     await screen.findByRole('option', { name: 'Synthetic project' });
     fireEvent.change(screen.getByLabelText('Project', { exact: true }), {
       target: { value: id },

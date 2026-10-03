@@ -80,3 +80,14 @@ The user authorized sequential implementation through a first testable personal 
 ## 2026-10-02 — personal MVP interface finalization
 
 User-authorized presentation polish uses the selected Signal assets, restrained glassmorphism and lowercase `mochi` in UI/window/bundle naming. The current milestone exposes Sessions/Settings with the existing consent/learning controls; full V1 navigation remains future work. Appearance override is window-local, not a durable preference. Browser rendering is a disabled appearance preview with no fake session data or native calls. This does not accept the live CLI/BYOK model-quality gate, complete lessons or the pending static companion native scenarios.
+
+2026-10-03 - User-authorized Bento Home amendment to D16/D17: native single-folder
+selection, explicit coding-source choice and targeted routing to existing
+Sessions approval replace only the post-tour guide. A Rust-owned private atomic
+UI preference remembers Home reached and last approved project UUID; no path,
+key, permission or connection proof is persisted there. Shared typed local reads
+and selection epochs prevent old-project publication. Welcome/slides, exact
+connection/send approvals, draft preservation and unavailable Desktop/Claude/
+Cowork boundaries remain. No migration or new integration/learning capability.
+Affected UX, architecture, data model and privacy documents are updated;
+[implementation evidence](../implementation/BENTO_HOME.md) records acceptance.

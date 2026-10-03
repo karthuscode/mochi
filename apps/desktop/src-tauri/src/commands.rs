@@ -221,3 +221,40 @@ pub async fn reveal_selfcheck(
     })
     .await
 }
+
+use crate::home_preferences::HomePreferences;
+use mochi_persistence::ProjectRepository;
+#[tauri::command]
+pub async fn get_home_preferences(
+    core: State<'_, Arc<LocalCapture>>,
+) -> Result<HomePreferences, &'static str> {
+    call(core.inner().clone(), |c| {
+        c.home_preferences.read().map_err(|e| e.message())
+    })
+    .await
+}
+#[tauri::command]
+pub async fn save_home_preferences(
+    core: State<'_, Arc<LocalCapture>>,
+    preferences: HomePreferences,
+) -> Result<(), &'static str> {
+    call(core.inner().clone(), move |c| {
+        let _guard = c
+            .operations
+            .lock()
+            .map_err(|_| "Local operation unavailable.")?;
+        if let Some(id) = preferences.project_id {
+            if c.store
+                .get_project(id)
+                .map_err(|_| "Projects unavailable.")?
+                .is_none_or(|p| p.deleted_at.is_some())
+            {
+                return Err("Approved project unavailable.");
+            }
+        }
+        c.home_preferences
+            .save(&preferences)
+            .map_err(|e| e.message())
+    })
+    .await
+}

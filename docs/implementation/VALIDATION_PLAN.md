@@ -65,3 +65,13 @@ Install → detect supported Codex → approve root/local tracking → approve i
 ## Evidence/report format
 
 Each brief records artifact/revision, scenario, expected/actual result, automated command or manual steps, pass/fail, safe logs/screenshots where necessary, and unresolved risk. Diagnostics must remain sanitized. CI can cover contracts/core/frontend; native/manual checks and real model/client proof are explicitly labeled. Release blocks on a known recognizable-secret leak, non-consensual send, misleading knowledge promotion, failed real capture, data resurrection or unavailable clean-machine arm64 package.
+
+## Bounded Bento Home checkpoint - 2026-10-03
+
+[Bento Home evidence](BENTO_HOME.md) records native one-folder selection/cancel,
+focused unchecked approval, persisted return/project selection, keyboard/theme/
+minimum-window inspection and automated error/race/stale-state coverage. Its
+synthetic app profile and frontend fixtures certify only these bounded UI/local
+preference behaviors. Existing real capture, live model quality, Keychain,
+clean-machine distribution, full accessibility and release audits retain their
+separate gates.

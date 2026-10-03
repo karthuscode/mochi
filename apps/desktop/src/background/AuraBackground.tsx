@@ -1,4 +1,4 @@
-import { LiquidEther } from './LiquidEther';
+import { DotField } from './DotField';
 import { useMediaPreference, useWindowActive } from './preferences';
 
 export function AuraBackground({
@@ -13,8 +13,8 @@ export function AuraBackground({
   const active = useWindowActive();
   return (
     <div className="aura-background" aria-hidden="true">
-      {animated && !reduced && !forced && (
-        <LiquidEther dark={dark} active={active} />
+      {!forced && (
+        <DotField dark={dark} animated={animated && !reduced} active={active} />
       )}
     </div>
   );
